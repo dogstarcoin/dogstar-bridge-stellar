@@ -306,6 +306,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "deployer"
+version = "0.0.0"
+dependencies = [
+ "hex",
+ "libsecp256k1",
+ "sha3",
+ "soroban-sdk",
+]
+
+[[package]]
 name = "der"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -518,16 +528,6 @@ name = "hashbrown"
 version = "0.14.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "290f1a1d9242c78d09ce40a5e87e7554ee637af1351968159f4952f028f75604"
-
-[[package]]
-name = "hello-world"
-version = "0.0.0"
-dependencies = [
- "hex",
- "libsecp256k1",
- "sha3",
- "soroban-sdk",
-]
 
 [[package]]
 name = "hex"
@@ -842,6 +842,16 @@ name = "platforms"
 version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "626dec3cac7cc0e1577a2ec3fc496277ec2baa084bebad95bb6fdbfae235f84c"
+
+[[package]]
+name = "pool"
+version = "0.0.0"
+dependencies = [
+ "hex",
+ "libsecp256k1",
+ "sha3",
+ "soroban-sdk",
+]
 
 [[package]]
 name = "powerfmt"

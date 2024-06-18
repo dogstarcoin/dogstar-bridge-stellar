@@ -1,6 +1,19 @@
-use soroban_sdk::{symbol_short, xdr::ToXdr, Env, String, Symbol};
+use soroban_sdk::{contracttype, symbol_short, xdr::ToXdr, Env, String, Symbol};
 
-use super::{recover, Error, Hasher, HASH_BYTES};
+pub mod recover;
+pub use recover::*;
+
+pub mod hasher;
+pub use hasher::*;
+
+use crate::errors::Error;
+
+#[derive(Clone)]
+#[contracttype]
+pub struct CouponPayload {
+    recovery_id: u32,
+    signature: String,
+}
 
 pub struct Coupon {
     pub recovery_id: u8,
@@ -8,12 +21,12 @@ pub struct Coupon {
 }
 
 impl Coupon {
-    pub fn new(e: Env, recovery_id: u32, signature: String) -> Self {
+    pub fn new(e: &Env, payload: CouponPayload) -> Self {
         let mut sig = [0u8; 32];
-        signature.to_xdr(&e).copy_into_slice(&mut sig);
+        payload.signature.to_xdr(&e).copy_into_slice(&mut sig);
 
         Coupon {
-            recovery_id: recovery_id as u8,
+            recovery_id: payload.recovery_id as u8,
             signature: sig,
         }
     }
