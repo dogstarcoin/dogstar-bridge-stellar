@@ -1,10 +1,19 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contractimpl, symbol_short, vec,
-    xdr::{FromXdr, ToXdr},
+    contract, contractimpl, contracttype, panic_with_error, symbol_short, vec,
+    xdr::{Error, FromXdr, ToXdr},
     Address, BytesN, Env, IntoVal, Symbol, Val, Vec,
 };
+
+const ADMIN: Symbol = symbol_short!("ADMIN");
+
+#[derive(Clone)]
+#[contracttype]
+pub struct Authority {
+    pub signer: Address,
+    pub fee_wallet: Address,
+}
 
 #[contract]
 pub struct BridgeDeployer;
@@ -20,6 +29,22 @@ pub trait BridgeDeployerTrait {
     );
 }
 
+pub fn get_admin(e: &Env) -> Address {
+    e.storage().instance().get(&ADMIN).unwrap()
+}
+
+pub fn set_admin(e: &Env, user: &Address, new_admin: &Address) {
+    require_admin(e, user);
+    e.storage().instance().set(&ADMIN, new_admin);
+}
+
+pub fn require_admin(e: &Env, user: &Address) {
+    user.require_auth();
+    if user.eq(&get_admin(&e)) {
+        panic_with_error!(&e, Error::Invalid)
+    }
+}
+
 #[contractimpl]
 impl BridgeDeployer {
     pub fn deploy(
@@ -29,11 +54,13 @@ impl BridgeDeployer {
         token: Address,
         other_chain_address: Address,
         fee: u32,
+        is_public: bool,
+        split_fees: u32,
+        owner: Authority,
+        admin: Authority,
     ) -> (Address, Val) {
         // Skip authorization if deployer is the current contract.
-        if deployer != e.current_contract_address() {
-            deployer.require_auth();
-        }
+        require_admin(&e, &deployer);
 
         let token_val = token.into_val(&e);
 
@@ -42,9 +69,13 @@ impl BridgeDeployer {
             token_val,
             other_chain_address.into_val(&e),
             fee.into_val(&e),
+            is_public.into_val(&e),
+            split_fees.into_val(&e),
+            owner.into_val(&e),
+            admin.into_val(&e),
         ];
 
-        // Only one pool for token
+        // Only one pool per token
         let salt: BytesN<32> = BytesN::from_xdr(&e, &token.to_xdr(&e)).unwrap();
 
         // Deploy the contract using the uploaded Wasm with given hash.
