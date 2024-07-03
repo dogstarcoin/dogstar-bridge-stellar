@@ -4,7 +4,7 @@ use soroban_sdk::{
     Bytes, BytesN, Env, String, Symbol,
 };
 
-use crate::{state::Error, utils::get_be};
+use crate::{be::get_be, storage_types::Error};
 
 #[derive(Clone)]
 #[contracttype]
@@ -36,8 +36,8 @@ impl Coupon {
         let recovered_pubkey =
             env.crypto()
                 .secp256k1_recover(&hash, &self.signature, self.recovery_id);
-
-        if recovered_pubkey.ne(&get_be(&env)) {
+        let hashed_pub_key = env.crypto().keccak256(&recovered_pubkey.into());
+        if hashed_pub_key.ne(&get_be(&env)) {
             return Err(Error::InvalidCoupon);
         }
 

@@ -8,7 +8,7 @@ export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly standalone: {
         readonly networkPassphrase: "Standalone Network ; February 2017";
-        readonly contractId: "CDVFB2ZMXEWMZPHVFOM4ZBOFULXIUDVBHYXAMQOIOVPVANO6CG3FPMIA";
+        readonly contractId: "CDIQPCLXZFSW5AF62BUQA3H5CI5SMBGLBFPG5NLNGZ73PUISJERA7Q6W";
     };
 };
 export interface CouponPayload {
@@ -50,12 +50,15 @@ export declare const Errors: {
     4: {
         message: string;
     };
+    5: {
+        message: string;
+    };
 };
 export interface Client {
     /**
-     * Construct and simulate a init transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+     * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    init: ({ token, other_chain_address, fee, is_public, split_fees, owner, admin }: {
+    initialize: ({ token, other_chain_address, fee, is_public, split_fees, owner, admin, be }: {
         token: string;
         other_chain_address: string;
         fee: u32;
@@ -63,6 +66,7 @@ export interface Client {
         split_fees: u32;
         owner: Authority;
         admin: Authority;
+        be: Buffer;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE
@@ -264,7 +268,7 @@ export declare class Client extends ContractClient {
     readonly options: ContractClientOptions;
     constructor(options: ContractClientOptions);
     readonly fromJSON: {
-        init: (json: string) => AssembledTransaction<null>;
+        initialize: (json: string) => AssembledTransaction<null>;
         release_liq: (json: string) => AssembledTransaction<null>;
         lock_liq: (json: string) => AssembledTransaction<null>;
         update_split: (json: string) => AssembledTransaction<null>;

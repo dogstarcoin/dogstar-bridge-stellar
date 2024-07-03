@@ -7,6 +7,7 @@ use soroban_sdk::{
 };
 
 const ADMIN: Symbol = symbol_short!("ADMIN");
+const BE: Symbol = symbol_short!("BE");
 
 #[derive(Clone)]
 #[contracttype]
@@ -29,8 +30,17 @@ pub trait BridgeDeployerTrait {
     );
 }
 
-pub fn get_admin(e: &Env) -> Address {
-    e.storage().instance().get(&ADMIN).unwrap()
+pub fn get_be(e: &Env) -> Address {
+    e.storage().instance().get(&BE).unwrap()
+}
+
+pub fn set_be(e: &Env, user: &Address, new_be: &BytesN<32>) {
+    require_admin(e, user);
+    e.storage().instance().set(&BE, new_be);
+}
+
+pub fn get_admin(e: &Env) -> Option<Address> {
+    e.storage().instance().get(&ADMIN)
 }
 
 pub fn set_admin(e: &Env, user: &Address, new_admin: &Address) {
@@ -40,13 +50,22 @@ pub fn set_admin(e: &Env, user: &Address, new_admin: &Address) {
 
 pub fn require_admin(e: &Env, user: &Address) {
     user.require_auth();
-    if user.eq(&get_admin(&e)) {
+    if user.eq(&get_admin(&e).unwrap()) {
         panic_with_error!(&e, Error::Invalid)
     }
 }
 
 #[contractimpl]
 impl BridgeDeployer {
+    pub fn init(e: Env, admin: Authority, be: BytesN<32>) {
+        if e.storage().instance().has(&ADMIN) {
+            panic!("already initialized")
+        }
+
+        e.storage().instance().set(&ADMIN, &admin);
+        e.storage().instance().set(&BE, &be);
+    }
+
     pub fn deploy(
         e: Env,
         deployer: Address,
@@ -57,11 +76,11 @@ impl BridgeDeployer {
         is_public: bool,
         split_fees: u32,
         owner: Authority,
-        admin: Authority,
     ) -> (Address, Val) {
         // Skip authorization if deployer is the current contract.
         require_admin(&e, &deployer);
-
+        let admin = get_admin(&e).unwrap();
+        let be = get_be(&e);
         let token_val = token.into_val(&e);
 
         let args: Vec<Val> = vec![
@@ -73,6 +92,8 @@ impl BridgeDeployer {
             split_fees.into_val(&e),
             owner.into_val(&e),
             admin.into_val(&e),
+            be.into_val(&e),
+            deployer.into_val(&e),
         ];
 
         // Only one pool per token
@@ -90,5 +111,13 @@ impl BridgeDeployer {
         // Return the contract ID of the deployed contract and the result of
         // invoking the init result.
         (deployed_address, res)
+    }
+
+    pub fn set_be(e: Env, user: Address, new_be: BytesN<32>) {
+        set_be(&e, &user, &new_be)
+    }
+
+    pub fn set_admin(e: Env, user: Address, new_admin: Address) {
+        set_admin(&e, &user, &new_admin)
     }
 }

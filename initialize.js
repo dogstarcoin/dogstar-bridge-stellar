@@ -32,7 +32,8 @@ function fundAll() {
   for (const key in process.env) {
     if (key.endsWith("PRIV_KEY")) {
       const name = key.split("_")[0].toLowerCase();
-      exe(`${cli} keys add ${name} --secret-key ${process.env[key]}`);
+      process.env.SOROBAN_SECRET_KEY = process.env[key];
+      exe(`${cli} keys add ${name} --secret-key`);
       exe(`${cli} keys fund ${name}`);
     }
   }
@@ -103,8 +104,8 @@ function importContract({ id, alias }) {
   mkdirSync(outputDir, { recursive: true });
 
   const importContent =
-    `import * as Client from '${alias}';\n` +
-    `import { rpcUrl } from './util';\n\n` +
+    `import * as Client from '../packages/${alias}/dist/index.js';\n` +
+    `import { rpcUrl } from './util.ts';\n\n` +
     `export default new Client.Client({\n` +
     `  ...Client.networks.${process.env.SOROBAN_NETWORK},\n` +
     `  rpcUrl,\n` +
@@ -133,3 +134,4 @@ buildAll();
 deployAll();
 bindAll();
 importAll();
+createXTAR();

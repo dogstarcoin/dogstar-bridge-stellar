@@ -1,3 +1,4 @@
+import "dotenv/config";
 import {
   Contract,
   Keypair,
@@ -5,24 +6,31 @@ import {
   networks as deployerNet,
 } from "../packages/deployer/dist/index.js";
 import { networks as poolNet } from "../packages/pool/dist/index.js";
+import { keccak256, toBuffer, ecsign } from "ethereumjs-utils";
 
 import { readFileSync } from "fs";
 
+export const XTAR = "GAORYJ3KBDGIM7FFSKVUJHJ5NEFWIRDIAGGBJBJS7TY6ECZS53257IG4";
+export const XTAR_sol = "3B5wuUrMEi5yATD7on46hKfej3pfmd7t1RKgrsN3pump";
 export const ADMIN = Keypair.fromSecret(process.env.ADMIN_PRIV_KEY);
 export const OWNER = Keypair.fromSecret(process.env.OWNER_PRIV_KEY);
 export const USER = Keypair.fromSecret(process.env.USER_PRIV_KEY);
+export const BE = keccak256(process.env.BE_PUB_KEY);
 
-export const server = new SorobanRpc.Server(process.env.PUBLIC_SOROBAN_RPC_URL);
+export const server = new SorobanRpc.Server(
+  process.env.PUBLIC_SOROBAN_RPC_URL,
+  { allowHttp: true }
+);
 
 export const deployer = new Contract(deployerNet.standalone.contractId);
 export const pool = new Contract(poolNet.standalone.contractId);
 
-export const poolWarm = readFileSync(
-  "../target/wasm32-unknown-unknown/release/pool.wasm"
+export const poolWarm = keccak256(
+  readFileSync("target/wasm32-unknown-unknown/release/pool.wasm")
 );
 
 export const submit_txn = async (txn: any) => {
-  const preparedTxn = await server.prepareTransaction(txn);
+  const preparedTxn = await server.prepareTransaction(txn.built);
   preparedTxn.sign(ADMIN);
   try {
     let sendResponse = await server.sendTransaction(preparedTxn);
