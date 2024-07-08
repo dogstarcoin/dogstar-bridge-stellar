@@ -2,11 +2,11 @@ use soroban_sdk::{contract, contractimpl, panic_with_error, symbol_short, Addres
 
 use crate::{
     admin::{get_admin, has_admin, set_admin},
-    be::set_be,
+    be::{get_be, set_be},
     coupons::{Coupon, CouponPayload},
     owner::{get_owner, require_owner, set_owner},
     pool::{get_pool, set_pool},
-    storage_types::{Authority, DataKey, Error, LockLiqEvent, Pool, ReleaseLiqPayload, ADMIN},
+    storage_types::{Authority, Error, LockLiqEvent, Pool, ReleaseLiqPayload},
     token::{transfer, transfer_in, transfer_out},
     utils::require_admin,
 };
@@ -106,8 +106,13 @@ impl BridgePool {
         );
     }
 
+    // POOL
+    pub fn get_pool(e: Env) -> Pool {
+        get_pool(&e)
+    }
+
     // ADMIN
-    pub fn update_split(e: Env, user: Address, split_fees: u32) {
+    pub fn set_split(e: Env, user: Address, split_fees: u32) {
         check_fee(split_fees);
         require_admin(&e, user);
 
@@ -116,20 +121,24 @@ impl BridgePool {
         set_pool(&e, &pool);
     }
 
-    pub fn update_admin(e: Env, user: Address, admin: Authority) {
+    pub fn set_admin(e: Env, user: Address, admin: Authority) {
         require_admin(&e, user);
 
         set_admin(&e, &admin);
     }
 
-    pub fn update_be(e: Env, user: Address, be: BytesN<32>) {
+    pub fn set_be(e: Env, user: Address, be: BytesN<32>) {
         require_admin(&e, user);
 
         set_be(&e, &be);
     }
 
+    pub fn get_admin(e: Env) -> Authority {
+        get_admin(&e)
+    }
+
     // OWNER
-    pub fn update_visibility(e: Env, user: Address, is_public: bool) {
+    pub fn set_visibility(e: Env, user: Address, is_public: bool) {
         require_owner(&e, user);
 
         let mut pool = get_pool(&e);
@@ -137,13 +146,13 @@ impl BridgePool {
         set_pool(&e, &pool);
     }
 
-    pub fn update_owner(e: Env, user: Address, owner: Authority) {
+    pub fn set_owner(e: Env, user: Address, owner: Authority) {
         require_owner(&e, user);
 
         set_owner(&e, &owner);
     }
 
-    pub fn update_other_chain_address(e: Env, user: Address, other_chain_address: Address) {
+    pub fn set_other_chain_address(e: Env, user: Address, other_chain_address: Address) {
         require_owner(&e, user);
 
         let mut pool = get_pool(&e);
@@ -151,12 +160,16 @@ impl BridgePool {
         set_pool(&e, &pool);
     }
 
-    pub fn update_fee(e: Env, user: Address, fee: u32) {
+    pub fn set_fee(e: Env, user: Address, fee: u32) {
         check_fee(fee);
         require_owner(&e, user);
 
         let mut pool = get_pool(&e);
         pool.fee = fee;
         set_pool(&e, &pool);
+    }
+
+    pub fn get_be(e: Env) -> BytesN<32> {
+        get_be(&e)
     }
 }

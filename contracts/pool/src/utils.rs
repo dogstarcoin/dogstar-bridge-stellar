@@ -8,10 +8,3 @@ pub fn require_admin(e: &Env, user: Address) {
         panic_with_error!(&e, Error::Unauthorized)
     }
 }
-
-pub fn get_deployer_contractid(e: &Env) -> Address {
-    Address::from_string(&String::from_str(
-        &e,
-        "CBRQZH3JEFDYW44NBDLXDILKTZFY7OICZYRPECJ2KVWL4ZT4AXDKJ2DD",
-    ))
-}

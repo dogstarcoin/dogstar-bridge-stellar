@@ -3,15 +3,13 @@ use soroban_sdk::{
     Val,
 };
 
-pub const ADMIN: Symbol = symbol_short!("ADMIN");
-
 #[derive(Clone, Copy)]
 #[repr(u32)]
 pub enum DataKey {
     POOL,
     OWNER,
+    ADMIN,
     BE,
-    DEPLOYER,
 }
 
 #[derive(Clone)]

@@ -33,7 +33,7 @@ if (typeof window !== 'undefined') {
 export const networks = {
   standalone: {
     networkPassphrase: "Standalone Network ; February 2017",
-    contractId: "CDIQPCLXZFSW5AF62BUQA3H5CI5SMBGLBFPG5NLNGZ73PUISJERA7Q6W",
+    contractId: "CDRNJXXFPKYUL2KNNW3ANQVOP5K2W25IV4PBAKTJUI2GDHOLEKWDTN5J",
   }
 } as const
 
@@ -143,9 +143,29 @@ export interface Client {
   }) => Promise<AssembledTransaction<null>>
 
   /**
-   * Construct and simulate a update_split transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Construct and simulate a get_pool transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  update_split: ({user, split_fees}: {user: string, split_fees: u32}, options?: {
+  get_pool: (options?: {
+    /**
+     * The fee to pay for the transaction. Default: BASE_FEE
+     */
+    fee?: number;
+
+    /**
+     * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+     */
+    timeoutInSeconds?: number;
+
+    /**
+     * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+     */
+    simulate?: boolean;
+  }) => Promise<AssembledTransaction<Pool>>
+
+  /**
+   * Construct and simulate a set_split transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  set_split: ({user, split_fees}: {user: string, split_fees: u32}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -163,9 +183,9 @@ export interface Client {
   }) => Promise<AssembledTransaction<null>>
 
   /**
-   * Construct and simulate a update_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Construct and simulate a set_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  update_admin: ({user, admin}: {user: string, admin: Authority}, options?: {
+  set_admin: ({user, admin}: {user: string, admin: Authority}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -183,9 +203,9 @@ export interface Client {
   }) => Promise<AssembledTransaction<null>>
 
   /**
-   * Construct and simulate a update_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Construct and simulate a set_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  update_be: ({user, be}: {user: string, be: Buffer}, options?: {
+  set_be: ({user, be}: {user: string, be: Buffer}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -203,9 +223,29 @@ export interface Client {
   }) => Promise<AssembledTransaction<null>>
 
   /**
-   * Construct and simulate a update_visibility transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Construct and simulate a get_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  update_visibility: ({user, is_public}: {user: string, is_public: boolean}, options?: {
+  get_admin: (options?: {
+    /**
+     * The fee to pay for the transaction. Default: BASE_FEE
+     */
+    fee?: number;
+
+    /**
+     * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+     */
+    timeoutInSeconds?: number;
+
+    /**
+     * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+     */
+    simulate?: boolean;
+  }) => Promise<AssembledTransaction<Authority>>
+
+  /**
+   * Construct and simulate a set_visibility transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  set_visibility: ({user, is_public}: {user: string, is_public: boolean}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -223,9 +263,9 @@ export interface Client {
   }) => Promise<AssembledTransaction<null>>
 
   /**
-   * Construct and simulate a update_owner transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Construct and simulate a set_owner transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  update_owner: ({user, owner}: {user: string, owner: Authority}, options?: {
+  set_owner: ({user, owner}: {user: string, owner: Authority}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -243,9 +283,9 @@ export interface Client {
   }) => Promise<AssembledTransaction<null>>
 
   /**
-   * Construct and simulate a update_other_chain_address transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Construct and simulate a set_other_chain_address transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  update_other_chain_address: ({user, other_chain_address}: {user: string, other_chain_address: string}, options?: {
+  set_other_chain_address: ({user, other_chain_address}: {user: string, other_chain_address: string}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -263,9 +303,9 @@ export interface Client {
   }) => Promise<AssembledTransaction<null>>
 
   /**
-   * Construct and simulate a update_fee transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Construct and simulate a set_fee transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  update_fee: ({user, fee}: {user: string, fee: u32}, options?: {
+  set_fee: ({user, fee}: {user: string, fee: u32}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -281,6 +321,26 @@ export interface Client {
      */
     simulate?: boolean;
   }) => Promise<AssembledTransaction<null>>
+
+  /**
+   * Construct and simulate a get_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  get_be: (options?: {
+    /**
+     * The fee to pay for the transaction. Default: BASE_FEE
+     */
+    fee?: number;
+
+    /**
+     * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+     */
+    timeoutInSeconds?: number;
+
+    /**
+     * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+     */
+    simulate?: boolean;
+  }) => Promise<AssembledTransaction<Buffer>>
 
 }
 export class Client extends ContractClient {
@@ -289,13 +349,16 @@ export class Client extends ContractClient {
       new ContractSpec([ "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAACAAAAAAAAAAFdG9rZW4AAAAAAAATAAAAAAAAABNvdGhlcl9jaGFpbl9hZGRyZXNzAAAAABMAAAAAAAAAA2ZlZQAAAAAEAAAAAAAAAAlpc19wdWJsaWMAAAAAAAABAAAAAAAAAApzcGxpdF9mZWVzAAAAAAAEAAAAAAAAAAVvd25lcgAAAAAAB9AAAAAJQXV0aG9yaXR5AAAAAAAAAAAAAAVhZG1pbgAAAAAAB9AAAAAJQXV0aG9yaXR5AAAAAAAAAAAAAAJiZQAAAAAD7gAAACAAAAAA",
         "AAAAAAAAAAAAAAALcmVsZWFzZV9saXEAAAAAAgAAAAAAAAAOY291cG9uX3BheWxvYWQAAAAAB9AAAAANQ291cG9uUGF5bG9hZAAAAAAAAAAAAAAHcGF5bG9hZAAAAAfQAAAAEVJlbGVhc2VMaXFQYXlsb2FkAAAAAAAAAA==",
         "AAAAAAAAAAAAAAAIbG9ja19saXEAAAAEAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAARmcm9tAAAAEwAAAAAAAAAOdG9fb3RoZXJfY2hhaW4AAAAAABMAAAAA",
-        "AAAAAAAAAAAAAAAMdXBkYXRlX3NwbGl0AAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAACnNwbGl0X2ZlZXMAAAAAAAQAAAAA",
-        "AAAAAAAAAAAAAAAMdXBkYXRlX2FkbWluAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAABWFkbWluAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAA",
-        "AAAAAAAAAAAAAAAJdXBkYXRlX2JlAAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAAAmJlAAAAAAPuAAAAIAAAAAA=",
-        "AAAAAAAAAAAAAAARdXBkYXRlX3Zpc2liaWxpdHkAAAAAAAACAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAJaXNfcHVibGljAAAAAAAAAQAAAAA=",
-        "AAAAAAAAAAAAAAAMdXBkYXRlX293bmVyAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAABW93bmVyAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAA",
-        "AAAAAAAAAAAAAAAadXBkYXRlX290aGVyX2NoYWluX2FkZHJlc3MAAAAAAAIAAAAAAAAABHVzZXIAAAATAAAAAAAAABNvdGhlcl9jaGFpbl9hZGRyZXNzAAAAABMAAAAA",
-        "AAAAAAAAAAAAAAAKdXBkYXRlX2ZlZQAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAAA2ZlZQAAAAAEAAAAAA==",
+        "AAAAAAAAAAAAAAAIZ2V0X3Bvb2wAAAAAAAAAAQAAB9AAAAAEUG9vbA==",
+        "AAAAAAAAAAAAAAAJc2V0X3NwbGl0AAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAACnNwbGl0X2ZlZXMAAAAAAAQAAAAA",
+        "AAAAAAAAAAAAAAAJc2V0X2FkbWluAAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAABWFkbWluAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAA",
+        "AAAAAAAAAAAAAAAGc2V0X2JlAAAAAAACAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAACYmUAAAAAA+4AAAAgAAAAAA==",
+        "AAAAAAAAAAAAAAAJZ2V0X2FkbWluAAAAAAAAAAAAAAEAAAfQAAAACUF1dGhvcml0eQAAAA==",
+        "AAAAAAAAAAAAAAAOc2V0X3Zpc2liaWxpdHkAAAAAAAIAAAAAAAAABHVzZXIAAAATAAAAAAAAAAlpc19wdWJsaWMAAAAAAAABAAAAAA==",
+        "AAAAAAAAAAAAAAAJc2V0X293bmVyAAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAABW93bmVyAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAA",
+        "AAAAAAAAAAAAAAAXc2V0X290aGVyX2NoYWluX2FkZHJlc3MAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAAE290aGVyX2NoYWluX2FkZHJlc3MAAAAAEwAAAAA=",
+        "AAAAAAAAAAAAAAAHc2V0X2ZlZQAAAAACAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAADZmVlAAAAAAQAAAAA",
+        "AAAAAAAAAAAAAAAGZ2V0X2JlAAAAAAAAAAAAAQAAA+4AAAAg",
         "AAAAAQAAAAAAAAAAAAAADUNvdXBvblBheWxvYWQAAAAAAAACAAAAAAAAAAtyZWNvdmVyeV9pZAAAAAAEAAAAAAAAAAlzaWduYXR1cmUAAAAAAAAQ",
         "AAAAAQAAAAAAAAAAAAAABFBvb2wAAAAGAAAAAAAAAANmZWUAAAAABAAAAAAAAAAJaXNfcHVibGljAAAAAAAAAQAAAAAAAAAMbGFzdF9yZWxlYXNlAAAABgAAAAAAAAATb3RoZXJfY2hhaW5fYWRkcmVzcwAAAAATAAAAAAAAAApzcGxpdF9mZWVzAAAAAAAEAAAAAAAAAAV0b2tlbgAAAAAAABM=",
         "AAAAAQAAAAAAAAAAAAAACUF1dGhvcml0eQAAAAAAAAIAAAAAAAAACmZlZV93YWxsZXQAAAAAABMAAAAAAAAABnNpZ25lcgAAAAAAEw==",
@@ -309,12 +372,15 @@ export class Client extends ContractClient {
     initialize: this.txFromJSON<null>,
         release_liq: this.txFromJSON<null>,
         lock_liq: this.txFromJSON<null>,
-        update_split: this.txFromJSON<null>,
-        update_admin: this.txFromJSON<null>,
-        update_be: this.txFromJSON<null>,
-        update_visibility: this.txFromJSON<null>,
-        update_owner: this.txFromJSON<null>,
-        update_other_chain_address: this.txFromJSON<null>,
-        update_fee: this.txFromJSON<null>
+        get_pool: this.txFromJSON<Pool>,
+        set_split: this.txFromJSON<null>,
+        set_admin: this.txFromJSON<null>,
+        set_be: this.txFromJSON<null>,
+        get_admin: this.txFromJSON<Authority>,
+        set_visibility: this.txFromJSON<null>,
+        set_owner: this.txFromJSON<null>,
+        set_other_chain_address: this.txFromJSON<null>,
+        set_fee: this.txFromJSON<null>,
+        get_be: this.txFromJSON<Buffer>
   }
 }

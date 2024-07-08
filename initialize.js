@@ -56,7 +56,7 @@ function filenameNoExtension(filename) {
 
 function deploy(wasm) {
   exe(
-    `${cli} contract deploy --wasm ${wasm} --ignore-checks --alias ${filenameNoExtension(
+    `${cli} contract deploy --source admin --wasm ${wasm} --ignore-checks --alias ${filenameNoExtension(
       wasm
     )}`
   );
@@ -106,7 +106,7 @@ function importContract({ id, alias }) {
   const importContent =
     `import * as Client from '../packages/${alias}/dist/index.js';\n` +
     `import { rpcUrl } from './util.ts';\n\n` +
-    `export default new Client.Client({\n` +
+    `export const get_client_${alias} = (publicKey: string)=> new Client.Client({\n` +
     `  ...Client.networks.${process.env.SOROBAN_NETWORK},\n` +
     `  rpcUrl,\n` +
     `${
@@ -114,7 +114,7 @@ function importContract({ id, alias }) {
         ? `  allowHttp: true,\n`
         : null
     }` +
-    `  publicKey: undefined,\n` +
+    `  publicKey,\n` +
     `});\n`;
 
   const outputPath = `${outputDir}/${alias}.ts`;
@@ -134,4 +134,4 @@ buildAll();
 deployAll();
 bindAll();
 importAll();
-createXTAR();
+// createXTAR();
