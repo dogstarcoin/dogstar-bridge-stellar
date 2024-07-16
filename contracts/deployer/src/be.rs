@@ -1,12 +1,12 @@
-use soroban_sdk::{Address, BytesN, Env};
+use soroban_sdk::{Address, Env, String};
 
-use crate::{admin::require_admin, types::BE};
+use crate::{admin::require_admin, types::DataKey};
 
-pub fn get_be(e: &Env) -> BytesN<32> {
-    e.storage().instance().get(&BE).unwrap()
+pub fn get_be(e: &Env) -> String {
+    e.storage().instance().get(&DataKey::Be).unwrap()
 }
 
-pub fn set_be(e: &Env, user: &Address, new_be: &BytesN<32>) {
+pub fn set_be(e: &Env, user: &Address, new_be: &String) {
     require_admin(e, user);
-    e.storage().instance().set(&BE, new_be);
+    e.storage().instance().set(&DataKey::Be, new_be);
 }

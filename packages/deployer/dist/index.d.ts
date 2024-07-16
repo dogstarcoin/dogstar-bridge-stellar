@@ -8,7 +8,7 @@ export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly standalone: {
         readonly networkPassphrase: "Standalone Network ; February 2017";
-        readonly contractId: "CCWIP3U6LQQDWXAM54QYUTAMN64YSJINJOYOZRUGBFPQJGVMV6J3QZGG";
+        readonly contractId: "CAEZJPIV5CKQTA3EDRWRYJVNN3PGCHZ72O4BWXNKNSZ46RA2R5V6ZAVD";
     };
 };
 export interface Authority {
@@ -22,7 +22,7 @@ export interface Client {
      */
     init: ({ admin, be }: {
         admin: Authority;
-        be: Buffer;
+        be: string;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE
@@ -40,7 +40,7 @@ export interface Client {
     /**
      * Construct and simulate a deploy transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    deploy: ({ deployer, wasm_hash, token, other_chain_address, fee, is_public, split_fees, owner }: {
+    deploy: ({ deployer, wasm_hash, token, other_chain_address, fee, is_public, split_fees, owner, token_symbol }: {
         deployer: string;
         wasm_hash: Buffer;
         token: string;
@@ -49,6 +49,7 @@ export interface Client {
         is_public: boolean;
         split_fees: u32;
         owner: Authority;
+        token_symbol: string;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE
@@ -62,13 +63,13 @@ export interface Client {
          * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
          */
         simulate?: boolean;
-    }) => Promise<AssembledTransaction<readonly [string, any]>>;
+    }) => Promise<AssembledTransaction<string>>;
     /**
      * Construct and simulate a set_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
     set_be: ({ user, new_be }: {
         user: string;
-        new_be: Buffer;
+        new_be: string;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE
@@ -99,13 +100,13 @@ export interface Client {
          * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
          */
         simulate?: boolean;
-    }) => Promise<AssembledTransaction<Buffer>>;
+    }) => Promise<AssembledTransaction<string>>;
     /**
      * Construct and simulate a set_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
     set_admin: ({ user, new_admin }: {
         user: string;
-        new_admin: string;
+        new_admin: Authority;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE
@@ -136,17 +137,17 @@ export interface Client {
          * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
          */
         simulate?: boolean;
-    }) => Promise<AssembledTransaction<string>>;
+    }) => Promise<AssembledTransaction<Authority>>;
 }
 export declare class Client extends ContractClient {
     readonly options: ContractClientOptions;
     constructor(options: ContractClientOptions);
     readonly fromJSON: {
         init: (json: string) => AssembledTransaction<null>;
-        deploy: (json: string) => AssembledTransaction<readonly [string, any]>;
+        deploy: (json: string) => AssembledTransaction<string>;
         set_be: (json: string) => AssembledTransaction<null>;
-        get_be: (json: string) => AssembledTransaction<Buffer>;
+        get_be: (json: string) => AssembledTransaction<string>;
         set_admin: (json: string) => AssembledTransaction<null>;
-        get_admin: (json: string) => AssembledTransaction<string>;
+        get_admin: (json: string) => AssembledTransaction<Authority>;
     };
 }

@@ -33,7 +33,7 @@ if (typeof window !== 'undefined') {
 export const networks = {
   standalone: {
     networkPassphrase: "Standalone Network ; February 2017",
-    contractId: "CCWIP3U6LQQDWXAM54QYUTAMN64YSJINJOYOZRUGBFPQJGVMV6J3QZGG",
+    contractId: "CAEZJPIV5CKQTA3EDRWRYJVNN3PGCHZ72O4BWXNKNSZ46RA2R5V6ZAVD",
   }
 } as const
 
@@ -51,7 +51,7 @@ export interface Client {
   /**
    * Construct and simulate a init transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  init: ({admin, be}: {admin: Authority, be: Buffer}, options?: {
+  init: ({admin, be}: {admin: Authority, be: string}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -71,7 +71,7 @@ export interface Client {
   /**
    * Construct and simulate a deploy transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  deploy: ({deployer, wasm_hash, token, other_chain_address, fee, is_public, split_fees, owner}: {deployer: string, wasm_hash: Buffer, token: string, other_chain_address: string, fee: u32, is_public: boolean, split_fees: u32, owner: Authority}, options?: {
+  deploy: ({deployer, wasm_hash, token, other_chain_address, fee, is_public, split_fees, owner, token_symbol}: {deployer: string, wasm_hash: Buffer, token: string, other_chain_address: string, fee: u32, is_public: boolean, split_fees: u32, owner: Authority, token_symbol: string}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -86,12 +86,12 @@ export interface Client {
      * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
      */
     simulate?: boolean;
-  }) => Promise<AssembledTransaction<readonly [string, any]>>
+  }) => Promise<AssembledTransaction<string>>
 
   /**
    * Construct and simulate a set_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_be: ({user, new_be}: {user: string, new_be: Buffer}, options?: {
+  set_be: ({user, new_be}: {user: string, new_be: string}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -126,12 +126,12 @@ export interface Client {
      * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
      */
     simulate?: boolean;
-  }) => Promise<AssembledTransaction<Buffer>>
+  }) => Promise<AssembledTransaction<string>>
 
   /**
    * Construct and simulate a set_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_admin: ({user, new_admin}: {user: string, new_admin: string}, options?: {
+  set_admin: ({user, new_admin}: {user: string, new_admin: Authority}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -166,28 +166,28 @@ export interface Client {
      * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
      */
     simulate?: boolean;
-  }) => Promise<AssembledTransaction<string>>
+  }) => Promise<AssembledTransaction<Authority>>
 
 }
 export class Client extends ContractClient {
   constructor(public readonly options: ContractClientOptions) {
     super(
-      new ContractSpec([ "AAAAAAAAAAAAAAAEaW5pdAAAAAIAAAAAAAAABWFkbWluAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAAAAAAAmJlAAAAAAPuAAAAIAAAAAA=",
-        "AAAAAAAAAAAAAAAGZGVwbG95AAAAAAAIAAAAAAAAAAhkZXBsb3llcgAAABMAAAAAAAAACXdhc21faGFzaAAAAAAAA+4AAAAgAAAAAAAAAAV0b2tlbgAAAAAAABMAAAAAAAAAE290aGVyX2NoYWluX2FkZHJlc3MAAAAAEwAAAAAAAAADZmVlAAAAAAQAAAAAAAAACWlzX3B1YmxpYwAAAAAAAAEAAAAAAAAACnNwbGl0X2ZlZXMAAAAAAAQAAAAAAAAABW93bmVyAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAABAAAD7QAAAAIAAAATAAAAAA==",
-        "AAAAAAAAAAAAAAAGc2V0X2JlAAAAAAACAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAGbmV3X2JlAAAAAAPuAAAAIAAAAAA=",
-        "AAAAAAAAAAAAAAAGZ2V0X2JlAAAAAAAAAAAAAQAAA+4AAAAg",
-        "AAAAAAAAAAAAAAAJc2V0X2FkbWluAAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAACW5ld19hZG1pbgAAAAAAABMAAAAA",
-        "AAAAAAAAAAAAAAAJZ2V0X2FkbWluAAAAAAAAAAAAAAEAAAAT",
+      new ContractSpec([ "AAAAAAAAAAAAAAAEaW5pdAAAAAIAAAAAAAAABWFkbWluAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAAAAAAAmJlAAAAAAAQAAAAAA==",
+        "AAAAAAAAAAAAAAAGZGVwbG95AAAAAAAJAAAAAAAAAAhkZXBsb3llcgAAABMAAAAAAAAACXdhc21faGFzaAAAAAAAA+4AAAAgAAAAAAAAAAV0b2tlbgAAAAAAABMAAAAAAAAAE290aGVyX2NoYWluX2FkZHJlc3MAAAAAEAAAAAAAAAADZmVlAAAAAAQAAAAAAAAACWlzX3B1YmxpYwAAAAAAAAEAAAAAAAAACnNwbGl0X2ZlZXMAAAAAAAQAAAAAAAAABW93bmVyAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAAAAAADHRva2VuX3N5bWJvbAAAABAAAAABAAAAEw==",
+        "AAAAAAAAAAAAAAAGc2V0X2JlAAAAAAACAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAGbmV3X2JlAAAAAAAQAAAAAA==",
+        "AAAAAAAAAAAAAAAGZ2V0X2JlAAAAAAAAAAAAAQAAABA=",
+        "AAAAAAAAAAAAAAAJc2V0X2FkbWluAAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAACW5ld19hZG1pbgAAAAAAB9AAAAAJQXV0aG9yaXR5AAAAAAAAAA==",
+        "AAAAAAAAAAAAAAAJZ2V0X2FkbWluAAAAAAAAAAAAAAEAAAfQAAAACUF1dGhvcml0eQAAAA==",
         "AAAAAQAAAAAAAAAAAAAACUF1dGhvcml0eQAAAAAAAAIAAAAAAAAACmZlZV93YWxsZXQAAAAAABMAAAAAAAAABnNpZ25lcgAAAAAAEw==" ]),
       options
     )
   }
   public readonly fromJSON = {
     init: this.txFromJSON<null>,
-        deploy: this.txFromJSON<readonly [string, any]>,
+        deploy: this.txFromJSON<string>,
         set_be: this.txFromJSON<null>,
-        get_be: this.txFromJSON<Buffer>,
+        get_be: this.txFromJSON<string>,
         set_admin: this.txFromJSON<null>,
-        get_admin: this.txFromJSON<string>
+        get_admin: this.txFromJSON<Authority>
   }
 }

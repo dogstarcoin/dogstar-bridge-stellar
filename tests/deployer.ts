@@ -1,90 +1,72 @@
+import { expect } from "chai";
 import { get_client_deployer } from "../contracts/deployer.ts";
-import {
-  BASE_FEE,
-  Networks,
-  SorobanRpc,
-  TransactionBuilder,
-  nativeToScVal,
-  xdr,
-} from "../packages/deployer/dist/index.js";
 
 import {
   ADMIN,
   BE,
+  poolWarm,
+  scValToAuthority,
+  submit_txn,
+  USER,
   XTAR,
   XTAR_sol,
-  poolWarm,
-  server,
-  submit_txn,
-  deployer_ct,
-  ADMIN_ADDRESS_VAL,
-  BE_VAL,
-} from "./util.ts";
+} from "./utils/index.ts";
+import { scValToNative } from "../packages/deployer/dist/index.js";
 
 describe("deployer", () => {
   const admin_pub_key = ADMIN.publicKey();
+  const user_pub_key = USER.publicKey();
 
   describe("success", () => {
-    it.only("init", async () => {
+    it("init", async () => {
       const client = get_client_deployer(admin_pub_key);
-      // const a = await client.get_admin();
-      // console.log(await a.simulate());
 
-      // const contractId =
-      //   "CCXKY7B63BSZXQMBZXQIYPIDD6KMIQML2MA364H5PP2WCCFRHVPATNVI";
-      // const key = xdr.ScVal.scvSymbol("ADMIN");
-      // try {
-      //   const b = await server.getContractData(
-      //     deployer_ct.contractId(),
-      //     key,
-      //     SorobanRpc.Durability.Temporary
-      //   );
-      // } catch (e) {
-      //   console.log(e);
-      // }
-
-      // console.log(await submit_txn(await client.get_admin(), ADMIN));
-      // const b = await a.simulate();
-      // const c = await submit_txn(b, ADMIN);
-      // console.log(c.value());
       const txn = await client.init(
         {
-          admin: { signer: admin_pub_key, fee_wallet: admin_pub_key },
+          admin: { signer: admin_pub_key, fee_wallet: user_pub_key },
           be: BE,
         },
         { simulate: false }
       );
 
-      const c = await submit_txn(txn, ADMIN);
+      await submit_txn(txn, ADMIN);
 
-      const n = await client.get_admin();
-      console.log(await n.simulate());
+      const get_admin = await client.get_admin();
+      const result_get_admin = await submit_txn(get_admin, ADMIN);
+      const authority = scValToAuthority(result_get_admin);
 
-      // console.log(c);
-      // const x = await server.getContractData(
-      //   deployer_ct.contractId(),
-      //   key,
-      //   SorobanRpc.Durability.Persistent
-      // );
-      // console.log(x);
+      const get_be = await client.get_be();
+      const result_get_be = await submit_txn(get_be, ADMIN);
+
+      expect(authority.signer).eq(admin_pub_key);
+      expect(authority.fee_wallet).eq(user_pub_key);
+      expect(scValToNative(result_get_be)).eq(BE);
     });
 
     it("deploy", async () => {
-      // const txn = await deployer.deploy({
-      //   deployer: admin_pub_key,
-      //   wasm_hash: poolWarm,
-      //   token: XTAR,
-      //   other_chain_address: XTAR_sol,
-      //   fee: 5,
-      //   is_public: true,
-      //   split_fees: 40,
-      //   owner: {
-      //     signer: admin_pub_key,
-      //     fee_wallet: admin_pub_key,
-      //   },
-      // });
-      // console.log(await txn.simulate());
-      // await submit_txn(txn);
+      const client = get_client_deployer(admin_pub_key);
+      const txn = await client.deploy({
+        deployer: admin_pub_key,
+        wasm_hash: poolWarm,
+        token: XTAR,
+        other_chain_address: XTAR_sol,
+        fee: 5,
+        is_public: true,
+        split_fees: 40,
+        owner: {
+          signer: admin_pub_key,
+          fee_wallet: admin_pub_key,
+        },
+        token_symbol: "xtar",
+      });
+
+      try {
+        const result = await txn.simulate();
+
+        console.log("Simulation result:", result);
+      } catch (error) {
+        console.log(error.simulation.events);
+      }
     });
   });
   describe("error", () => {});

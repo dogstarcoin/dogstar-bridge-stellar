@@ -1,4 +1,6 @@
-use soroban_sdk::{contract, contractimpl, panic_with_error, symbol_short, Address, BytesN, Env};
+use soroban_sdk::{
+    contract, contractimpl, panic_with_error, symbol_short, Address, BytesN, Env, String,
+};
 
 use crate::{
     admin::{get_admin, has_admin, set_admin},
@@ -28,19 +30,20 @@ pub struct BridgePool;
 
 #[contractimpl]
 impl BridgePool {
-    pub fn initialize(
+    pub fn init(
         e: Env,
         token: Address,
-        other_chain_address: Address,
+        other_chain_address: String,
         fee: u32,
         is_public: bool,
         split_fees: u32,
         owner: Authority,
         admin: Authority,
         be: BytesN<32>,
+        token_symbol: String,
     ) {
         if has_admin(&e) {
-            !panic!("already initialized")
+            panic!("already initialized")
         }
 
         check_fee(split_fees);
@@ -53,6 +56,7 @@ impl BridgePool {
             split_fees,
             is_public,
             last_release: 0,
+            token_symbol: token_symbol,
         };
 
         set_pool(&e, &pool);
@@ -69,7 +73,7 @@ impl BridgePool {
         transfer_out(&e, &payload.to, &payload.amount);
     }
 
-    pub fn lock_liq(e: Env, user: Address, amount: i128, from: Address, to_other_chain: Address) {
+    pub fn lock_liq(e: Env, user: Address, amount: i128, to_other_chain: String) {
         user.require_auth();
         check_nonnegative_amount(amount);
 
@@ -81,25 +85,29 @@ impl BridgePool {
             panic_with_error!(&e, Error::Unauthorized)
         }
 
-        let fee: i128 = pool.fee.checked_div(100).unwrap().into();
-        let as_fee = amount.checked_mul(fee).unwrap();
+        let as_fee = amount
+            .checked_mul(pool.fee.into())
+            .unwrap()
+            .checked_div(100)
+            .unwrap();
+        let amount_to_admin = as_fee
+            .checked_mul(pool.split_fees.into())
+            .unwrap()
+            .checked_div(100)
+            .unwrap();
+        let amount_to_owner = as_fee.checked_sub(amount_to_admin).unwrap();
+
         let to_receive = amount.checked_sub(as_fee).unwrap();
 
-        let one: i128 = 1;
-        let admin_fee_share: i128 = pool.split_fees.checked_div(100).unwrap().into();
-        let owner_fee_share: i128 = one.checked_sub(admin_fee_share).unwrap();
-        let amount_to_admin = as_fee.checked_mul(admin_fee_share).unwrap();
-        let amount_to_owner = as_fee.checked_mul(owner_fee_share).unwrap();
-
-        transfer_in(&e, &from, &to_receive);
-        transfer(&e, &admin.fee_wallet, &from, &amount_to_admin);
-        transfer(&e, &owner.fee_wallet, &from, &amount_to_owner);
+        transfer_in(&e, &user, &to_receive);
+        transfer(&e, &user, &admin.fee_wallet, &amount_to_admin);
+        transfer(&e, &user, &owner.fee_wallet, &amount_to_owner);
 
         e.events().publish(
             (symbol_short!("locked"),),
             LockLiqEvent {
                 amount: to_receive,
-                from: from,
+                from: user,
                 token_other_chain: pool.other_chain_address,
                 to_other_chain,
             },
@@ -112,23 +120,23 @@ impl BridgePool {
     }
 
     // ADMIN
-    pub fn set_split(e: Env, user: Address, split_fees: u32) {
+    pub fn set_split(e: Env, split_fees: u32) {
         check_fee(split_fees);
-        require_admin(&e, user);
+        require_admin(&e);
 
         let mut pool = get_pool(&e);
         pool.split_fees = split_fees;
         set_pool(&e, &pool);
     }
 
-    pub fn set_admin(e: Env, user: Address, admin: Authority) {
-        require_admin(&e, user);
+    pub fn set_admin(e: Env, admin: Authority) {
+        require_admin(&e);
 
         set_admin(&e, &admin);
     }
 
-    pub fn set_be(e: Env, user: Address, be: BytesN<32>) {
-        require_admin(&e, user);
+    pub fn set_be(e: Env, be: BytesN<32>) {
+        require_admin(&e);
 
         set_be(&e, &be);
     }
@@ -138,35 +146,39 @@ impl BridgePool {
     }
 
     // OWNER
-    pub fn set_visibility(e: Env, user: Address, is_public: bool) {
-        require_owner(&e, user);
+    pub fn set_visibility(e: Env, is_public: bool) {
+        require_owner(&e);
 
         let mut pool = get_pool(&e);
         pool.is_public = is_public;
         set_pool(&e, &pool);
     }
 
-    pub fn set_owner(e: Env, user: Address, owner: Authority) {
-        require_owner(&e, user);
+    pub fn set_owner(e: Env, owner: Authority) {
+        require_owner(&e);
 
         set_owner(&e, &owner);
     }
 
-    pub fn set_other_chain_address(e: Env, user: Address, other_chain_address: Address) {
-        require_owner(&e, user);
+    pub fn set_other_chain_address(e: Env, other_chain_address: String) {
+        require_owner(&e);
 
         let mut pool = get_pool(&e);
         pool.other_chain_address = other_chain_address;
         set_pool(&e, &pool);
     }
 
-    pub fn set_fee(e: Env, user: Address, fee: u32) {
+    pub fn set_fee(e: Env, fee: u32) {
         check_fee(fee);
-        require_owner(&e, user);
+        require_owner(&e);
 
         let mut pool = get_pool(&e);
         pool.fee = fee;
         set_pool(&e, &pool);
+    }
+
+    pub fn get_owner(e: Env) -> Authority {
+        get_owner(&e)
     }
 
     pub fn get_be(e: Env) -> BytesN<32> {

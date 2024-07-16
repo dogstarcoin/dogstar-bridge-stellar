@@ -10,4 +10,5 @@ mod storage_types;
 mod token;
 mod utils;
 
+mod test;
 pub use crate::contract::BridgePool;

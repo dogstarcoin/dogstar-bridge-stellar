@@ -1,19 +1,22 @@
 use soroban_sdk::{Address, Env};
 
-use crate::types::ADMIN;
+use crate::types::{Authority, DataKey};
 
-pub fn get_admin(e: &Env) -> Address {
-    e.storage().instance().get(&ADMIN).unwrap()
+pub fn get_admin(e: &Env) -> Authority {
+    e.storage()
+        .instance()
+        .get(&DataKey::Admin)
+        .unwrap_or_else(|| panic!("Admin not set"))
 }
 
-pub fn set_admin(e: &Env, user: &Address, new_admin: &Address) {
+pub fn set_admin(e: &Env, user: &Address, new_admin: &Authority) {
     require_admin(e, user);
-    e.storage().instance().set(&ADMIN, new_admin);
+    e.storage().instance().set(&DataKey::Admin, new_admin);
 }
 
 pub fn require_admin(e: &Env, user: &Address) {
     user.require_auth();
-    if user.eq(&get_admin(&e)) {
+    if user.ne(&get_admin(&e).signer) {
         panic!("admin required")
     }
 }

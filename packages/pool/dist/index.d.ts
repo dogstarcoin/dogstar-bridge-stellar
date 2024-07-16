@@ -8,13 +8,26 @@ export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly standalone: {
         readonly networkPassphrase: "Standalone Network ; February 2017";
-        readonly contractId: "CDRNJXXFPKYUL2KNNW3ANQVOP5K2W25IV4PBAKTJUI2GDHOLEKWDTN5J";
+        readonly contractId: "CBJ2LFVT3CDEJS2AL5ZAJJIPJNAQIVCAKRV3FY2IDI6EQ7IGBEFIUWRE";
     };
 };
 export interface CouponPayload {
     recovery_id: u32;
     signature: string;
 }
+export type DataKey = {
+    tag: "Pool";
+    values: void;
+} | {
+    tag: "Owner";
+    values: void;
+} | {
+    tag: "Admin";
+    values: void;
+} | {
+    tag: "Be";
+    values: void;
+};
 export interface Pool {
     fee: u32;
     is_public: boolean;
@@ -22,6 +35,7 @@ export interface Pool {
     other_chain_address: string;
     split_fees: u32;
     token: string;
+    token_symbol: string;
 }
 export interface Authority {
     fee_wallet: string;
@@ -58,7 +72,7 @@ export interface Client {
     /**
      * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    initialize: ({ token, other_chain_address, fee, is_public, split_fees, owner, admin, be }: {
+    initialize: ({ token, other_chain_address, fee, is_public, split_fees, owner, admin, be, token_symbol }: {
         token: string;
         other_chain_address: string;
         fee: u32;
@@ -67,6 +81,7 @@ export interface Client {
         owner: Authority;
         admin: Authority;
         be: Buffer;
+        token_symbol: string;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE

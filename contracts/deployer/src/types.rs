@@ -1,7 +1,12 @@
-use soroban_sdk::{contracttype, symbol_short, Address, Symbol};
+use soroban_sdk::{contracttype, Address};
 
-pub const ADMIN: Symbol = symbol_short!("ADMIN");
-pub const BE: Symbol = symbol_short!("BE");
+#[derive(Clone)]
+#[contracttype]
+pub enum DataKey {
+    Admin,
+    Be,
+    Pools(Address),
+}
 
 #[derive(Clone)]
 #[contracttype]

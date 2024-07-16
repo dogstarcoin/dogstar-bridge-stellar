@@ -6,3 +6,4 @@ target
 .env
 node_modules
 package-lock.json
+**/test_snapshots
