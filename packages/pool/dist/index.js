@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
 export const networks = {
     standalone: {
         networkPassphrase: "Standalone Network ; February 2017",
-        contractId: "CA7BVYR6VYGVK6AAYVYSNJ2ZN4CFMSEE4NTEWFCYBHDVHMEKHXLLGKVA",
+        contractId: "CDBWHIQYASNPKNSF6IIUEXDQS72CEUDCF6EJ74JGK5WSTONFQ7B3MQR3",
     }
 };
 export const Errors = {
@@ -28,6 +28,7 @@ export class Client extends ContractClient {
             "AAAAAAAAAAAAAAAIbG9ja19saXEAAAADAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAA50b19vdGhlcl9jaGFpbgAAAAAAEAAAAAA=",
             "AAAAAAAAAAAAAAAHYXBwcm92ZQAAAAACAAAAAAAAAARmcm9tAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAA==",
             "AAAAAAAAAAAAAAAIZ2V0X3Bvb2wAAAAAAAAAAQAAB9AAAAAEUG9vbA==",
+            "AAAAAAAAAAAAAAALZ2V0X3JlbGVhc2UAAAAAAQAAAAAAAAAEdXNlcgAAABMAAAABAAAH0AAAAAdSZWxlYXNlAA==",
             "AAAAAAAAAAAAAAAJc2V0X3NwbGl0AAAAAAAAAQAAAAAAAAAKc3BsaXRfZmVlcwAAAAAABAAAAAA=",
             "AAAAAAAAAAAAAAAJc2V0X2FkbWluAAAAAAAAAQAAAAAAAAAFYWRtaW4AAAAAAAfQAAAACUF1dGhvcml0eQAAAAAAAAA=",
             "AAAAAAAAAAAAAAAGc2V0X2JlAAAAAAABAAAAAAAAAAJiZQAAAAAD7gAAAEEAAAAA",
@@ -55,6 +56,7 @@ export class Client extends ContractClient {
         lock_liq: (this.txFromJSON),
         approve: (this.txFromJSON),
         get_pool: (this.txFromJSON),
+        get_release: (this.txFromJSON),
         set_split: (this.txFromJSON),
         set_admin: (this.txFromJSON),
         set_be: (this.txFromJSON),

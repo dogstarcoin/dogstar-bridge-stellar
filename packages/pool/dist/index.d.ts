@@ -8,7 +8,7 @@ export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly standalone: {
         readonly networkPassphrase: "Standalone Network ; February 2017";
-        readonly contractId: "CA7BVYR6VYGVK6AAYVYSNJ2ZN4CFMSEE4NTEWFCYBHDVHMEKHXLLGKVA";
+        readonly contractId: "CDBWHIQYASNPKNSF6IIUEXDQS72CEUDCF6EJ74JGK5WSTONFQ7B3MQR3";
     };
 };
 export interface CouponPayload {
@@ -189,6 +189,25 @@ export interface Client {
          */
         simulate?: boolean;
     }) => Promise<AssembledTransaction<Pool>>;
+    /**
+     * Construct and simulate a get_release transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+     */
+    get_release: ({ user }: {
+        user: string;
+    }, options?: {
+        /**
+         * The fee to pay for the transaction. Default: BASE_FEE
+         */
+        fee?: number;
+        /**
+         * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+         */
+        timeoutInSeconds?: number;
+        /**
+         * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+         */
+        simulate?: boolean;
+    }) => Promise<AssembledTransaction<Release>>;
     /**
      * Construct and simulate a set_split transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
@@ -383,6 +402,7 @@ export declare class Client extends ContractClient {
         lock_liq: (json: string) => AssembledTransaction<null>;
         approve: (json: string) => AssembledTransaction<null>;
         get_pool: (json: string) => AssembledTransaction<Pool>;
+        get_release: (json: string) => AssembledTransaction<Release>;
         set_split: (json: string) => AssembledTransaction<null>;
         set_admin: (json: string) => AssembledTransaction<null>;
         set_be: (json: string) => AssembledTransaction<null>;

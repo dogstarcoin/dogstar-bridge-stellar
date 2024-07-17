@@ -69,8 +69,9 @@ function deployAll() {
   const wasmFiles = glob(
     `${dirname}/target/wasm32-unknown-unknown/release/*.wasm`
   );
-
-  wasmFiles.forEach(deploy);
+  wasmFiles
+    .filter((wasm) => !wasm.endsWith("soroban_token_contract.wasm"))
+    .forEach(deploy);
 }
 
 function contracts() {

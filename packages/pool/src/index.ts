@@ -33,7 +33,7 @@ if (typeof window !== 'undefined') {
 export const networks = {
   standalone: {
     networkPassphrase: "Standalone Network ; February 2017",
-    contractId: "CA7BVYR6VYGVK6AAYVYSNJ2ZN4CFMSEE4NTEWFCYBHDVHMEKHXLLGKVA",
+    contractId: "CDBWHIQYASNPKNSF6IIUEXDQS72CEUDCF6EJ74JGK5WSTONFQ7B3MQR3",
   }
 } as const
 
@@ -200,6 +200,26 @@ export interface Client {
      */
     simulate?: boolean;
   }) => Promise<AssembledTransaction<Pool>>
+
+  /**
+   * Construct and simulate a get_release transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  get_release: ({user}: {user: string}, options?: {
+    /**
+     * The fee to pay for the transaction. Default: BASE_FEE
+     */
+    fee?: number;
+
+    /**
+     * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+     */
+    timeoutInSeconds?: number;
+
+    /**
+     * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+     */
+    simulate?: boolean;
+  }) => Promise<AssembledTransaction<Release>>
 
   /**
    * Construct and simulate a set_split transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -410,6 +430,7 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAAIbG9ja19saXEAAAADAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAA50b19vdGhlcl9jaGFpbgAAAAAAEAAAAAA=",
         "AAAAAAAAAAAAAAAHYXBwcm92ZQAAAAACAAAAAAAAAARmcm9tAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAA==",
         "AAAAAAAAAAAAAAAIZ2V0X3Bvb2wAAAAAAAAAAQAAB9AAAAAEUG9vbA==",
+        "AAAAAAAAAAAAAAALZ2V0X3JlbGVhc2UAAAAAAQAAAAAAAAAEdXNlcgAAABMAAAABAAAH0AAAAAdSZWxlYXNlAA==",
         "AAAAAAAAAAAAAAAJc2V0X3NwbGl0AAAAAAAAAQAAAAAAAAAKc3BsaXRfZmVlcwAAAAAABAAAAAA=",
         "AAAAAAAAAAAAAAAJc2V0X2FkbWluAAAAAAAAAQAAAAAAAAAFYWRtaW4AAAAAAAfQAAAACUF1dGhvcml0eQAAAAAAAAA=",
         "AAAAAAAAAAAAAAAGc2V0X2JlAAAAAAABAAAAAAAAAAJiZQAAAAAD7gAAAEEAAAAA",
@@ -438,6 +459,7 @@ export class Client extends ContractClient {
         lock_liq: this.txFromJSON<null>,
         approve: this.txFromJSON<null>,
         get_pool: this.txFromJSON<Pool>,
+        get_release: this.txFromJSON<Release>,
         set_split: this.txFromJSON<null>,
         set_admin: this.txFromJSON<null>,
         set_be: this.txFromJSON<null>,
