@@ -33,9 +33,11 @@ if (typeof window !== 'undefined') {
 export const networks = {
   standalone: {
     networkPassphrase: "Standalone Network ; February 2017",
-    contractId: "CAEZJPIV5CKQTA3EDRWRYJVNN3PGCHZ72O4BWXNKNSZ46RA2R5V6ZAVD",
+    contractId: "CCW3O3OFZHJNUIBNLZCPMTTQDVGSCBQVGNHINKI4RMDY33GWKANALVEV",
   }
 } as const
+
+export type DataKey = {tag: "Admin", values: void} | {tag: "Be", values: void} | {tag: "Pools", values: readonly [string]};
 
 
 export interface Authority {
@@ -51,7 +53,7 @@ export interface Client {
   /**
    * Construct and simulate a init transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  init: ({admin, be}: {admin: Authority, be: string}, options?: {
+  init: ({admin, be}: {admin: Authority, be: Buffer}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -71,7 +73,7 @@ export interface Client {
   /**
    * Construct and simulate a deploy transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  deploy: ({deployer, wasm_hash, token, other_chain_address, fee, is_public, split_fees, owner, token_symbol}: {deployer: string, wasm_hash: Buffer, token: string, other_chain_address: string, fee: u32, is_public: boolean, split_fees: u32, owner: Authority, token_symbol: string}, options?: {
+  deploy: ({deployer, token, other_chain_address, fee, is_public, split_fees, owner, token_symbol}: {deployer: string, token: string, other_chain_address: string, fee: u32, is_public: boolean, split_fees: u32, owner: Authority, token_symbol: string}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -86,12 +88,12 @@ export interface Client {
      * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
      */
     simulate?: boolean;
-  }) => Promise<AssembledTransaction<string>>
+  }) => Promise<AssembledTransaction<readonly [string, any]>>
 
   /**
    * Construct and simulate a set_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_be: ({user, new_be}: {user: string, new_be: string}, options?: {
+  set_be: ({user, new_be}: {user: string, new_be: Buffer}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -126,7 +128,7 @@ export interface Client {
      * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
      */
     simulate?: boolean;
-  }) => Promise<AssembledTransaction<string>>
+  }) => Promise<AssembledTransaction<Buffer>>
 
   /**
    * Construct and simulate a set_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -168,26 +170,49 @@ export interface Client {
     simulate?: boolean;
   }) => Promise<AssembledTransaction<Authority>>
 
+  /**
+   * Construct and simulate a get_deployed_address transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  get_deployed_address: ({token}: {token: string}, options?: {
+    /**
+     * The fee to pay for the transaction. Default: BASE_FEE
+     */
+    fee?: number;
+
+    /**
+     * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+     */
+    timeoutInSeconds?: number;
+
+    /**
+     * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+     */
+    simulate?: boolean;
+  }) => Promise<AssembledTransaction<string>>
+
 }
 export class Client extends ContractClient {
   constructor(public readonly options: ContractClientOptions) {
     super(
-      new ContractSpec([ "AAAAAAAAAAAAAAAEaW5pdAAAAAIAAAAAAAAABWFkbWluAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAAAAAAAmJlAAAAAAAQAAAAAA==",
-        "AAAAAAAAAAAAAAAGZGVwbG95AAAAAAAJAAAAAAAAAAhkZXBsb3llcgAAABMAAAAAAAAACXdhc21faGFzaAAAAAAAA+4AAAAgAAAAAAAAAAV0b2tlbgAAAAAAABMAAAAAAAAAE290aGVyX2NoYWluX2FkZHJlc3MAAAAAEAAAAAAAAAADZmVlAAAAAAQAAAAAAAAACWlzX3B1YmxpYwAAAAAAAAEAAAAAAAAACnNwbGl0X2ZlZXMAAAAAAAQAAAAAAAAABW93bmVyAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAAAAAADHRva2VuX3N5bWJvbAAAABAAAAABAAAAEw==",
-        "AAAAAAAAAAAAAAAGc2V0X2JlAAAAAAACAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAGbmV3X2JlAAAAAAAQAAAAAA==",
-        "AAAAAAAAAAAAAAAGZ2V0X2JlAAAAAAAAAAAAAQAAABA=",
+      new ContractSpec([ "AAAAAAAAAAAAAAAEaW5pdAAAAAIAAAAAAAAABWFkbWluAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAAAAAAAmJlAAAAAAPuAAAAQQAAAAA=",
+        "AAAAAAAAAAAAAAAGZGVwbG95AAAAAAAIAAAAAAAAAAhkZXBsb3llcgAAABMAAAAAAAAABXRva2VuAAAAAAAAEwAAAAAAAAATb3RoZXJfY2hhaW5fYWRkcmVzcwAAAAAQAAAAAAAAAANmZWUAAAAABAAAAAAAAAAJaXNfcHVibGljAAAAAAAAAQAAAAAAAAAKc3BsaXRfZmVlcwAAAAAABAAAAAAAAAAFb3duZXIAAAAAAAfQAAAACUF1dGhvcml0eQAAAAAAAAAAAAAMdG9rZW5fc3ltYm9sAAAAEAAAAAEAAAPtAAAAAgAAABMAAAAA",
+        "AAAAAAAAAAAAAAAGc2V0X2JlAAAAAAACAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAGbmV3X2JlAAAAAAPuAAAAQQAAAAA=",
+        "AAAAAAAAAAAAAAAGZ2V0X2JlAAAAAAAAAAAAAQAAA+4AAABB",
         "AAAAAAAAAAAAAAAJc2V0X2FkbWluAAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAACW5ld19hZG1pbgAAAAAAB9AAAAAJQXV0aG9yaXR5AAAAAAAAAA==",
         "AAAAAAAAAAAAAAAJZ2V0X2FkbWluAAAAAAAAAAAAAAEAAAfQAAAACUF1dGhvcml0eQAAAA==",
+        "AAAAAAAAAAAAAAAUZ2V0X2RlcGxveWVkX2FkZHJlc3MAAAABAAAAAAAAAAV0b2tlbgAAAAAAABMAAAABAAAAEw==",
+        "AAAAAgAAAAAAAAAAAAAAB0RhdGFLZXkAAAAAAwAAAAAAAAAAAAAABUFkbWluAAAAAAAAAAAAAAAAAAACQmUAAAAAAAEAAAAAAAAABVBvb2xzAAAAAAAAAQAAABM=",
         "AAAAAQAAAAAAAAAAAAAACUF1dGhvcml0eQAAAAAAAAIAAAAAAAAACmZlZV93YWxsZXQAAAAAABMAAAAAAAAABnNpZ25lcgAAAAAAEw==" ]),
       options
     )
   }
   public readonly fromJSON = {
     init: this.txFromJSON<null>,
-        deploy: this.txFromJSON<string>,
+        deploy: this.txFromJSON<readonly [string, any]>,
         set_be: this.txFromJSON<null>,
-        get_be: this.txFromJSON<string>,
+        get_be: this.txFromJSON<Buffer>,
         set_admin: this.txFromJSON<null>,
-        get_admin: this.txFromJSON<Authority>
+        get_admin: this.txFromJSON<Authority>,
+        get_deployed_address: this.txFromJSON<string>
   }
 }

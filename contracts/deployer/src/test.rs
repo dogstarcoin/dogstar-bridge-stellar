@@ -1,10 +1,10 @@
 #![cfg(test)]
 
 use super::{contract::BridgeDeployerClient, types::Authority, BridgeDeployer};
-use soroban_sdk::String;
 use soroban_sdk::{testutils::Address as _, Address, Env};
+use soroban_sdk::{BytesN, String};
 
-fn init(e: &Env) -> (BridgeDeployerClient, Authority, String) {
+fn init(e: &Env) -> (BridgeDeployerClient, Authority, BytesN<65>) {
     let contract_id = e.register_contract(None, BridgeDeployer {});
     let deployer_client = BridgeDeployerClient::new(&e, &contract_id);
 
@@ -13,11 +13,19 @@ fn init(e: &Env) -> (BridgeDeployerClient, Authority, String) {
         fee_wallet: Address::generate(&e),
     };
 
-    let be = String::from_str(&e, "52a51c1bef8056119d5f114af2d71a2e978a9b260e1a156c2af1a1643291b0e90c38da6d1bef18fc80588dddfc5344638954482c7de6613a0c5eef6ec2e36ee3");
+    let be = string_to_byte_n65(&e, "0452a51c1bef8056119d5f114af2d71a2e978a9b260e1a156c2af1a1643291b0e90c38da6d1bef18fc80588dddfc5344638954482c7de6613a0c5eef6ec2e36ee3").unwrap();
 
     deployer_client.init(&admin, &be);
 
     (deployer_client, admin, be)
+}
+fn string_to_byte_n65(e: &Env, s: &str) -> Result<BytesN<65>, &'static str> {
+    let vec = hex::decode(s).unwrap();
+    let byte_array: [u8; 65] = vec
+        .try_into()
+        .map_err(|_| "Failed to convert to [u8; 65].")?;
+
+    Ok(BytesN::from_array(&e, &byte_array))
 }
 
 #[test]
@@ -66,20 +74,6 @@ fn test_deploy() {
     let stored_deployed_address = client.get_deployed_address(&token);
 
     assert_eq!(stored_deployed_address, deployed_address);
-}
-
-#[test]
-fn test_set_be() {
-    let env = Env::default();
-    env.mock_all_auths();
-    let (client, admin, _) = init(&env);
-
-    let new_be = String::from_str(&env, "new_backend_endpoint");
-
-    client.set_be(&admin.signer, &new_be);
-
-    let stored_be = client.get_be();
-    assert_eq!(stored_be, new_be);
 }
 
 #[test]

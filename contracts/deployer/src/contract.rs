@@ -1,6 +1,6 @@
 use crate::{
     admin::{get_admin, require_admin, set_admin},
-    be::{get_be, set_be},
+    be::{read_be, write_be},
     types::{Authority, DataKey},
 };
 
@@ -19,7 +19,7 @@ pub struct BridgeDeployer;
 
 #[contractimpl]
 impl BridgeDeployer {
-    pub fn init(e: Env, admin: Authority, be: String) {
+    pub fn init(e: Env, admin: Authority, be: BytesN<65>) {
         if e.storage().instance().has(&DataKey::Admin) {
             panic!("already initialized")
         }
@@ -41,9 +41,8 @@ impl BridgeDeployer {
     ) -> (Address, Val) {
         require_admin(&e, &deployer);
         let admin = get_admin(&e);
-        let be = e.crypto().keccak256(&get_be(&e).to_xdr(&e));
+        let be = read_be(&e);
         let token_val: Val = token.clone().into_val(&e);
-
         let args: Vec<Val> = vec![
             &e,
             token_val,
@@ -57,7 +56,6 @@ impl BridgeDeployer {
             token_symbol.into_val(&e),
         ];
         let wasm_hash = e.deployer().upload_contract_wasm(contract::WASM);
-
         // // Only one pool per token
         let salt: BytesN<32> = BytesN::from_xdr(
             &e,
@@ -78,12 +76,12 @@ impl BridgeDeployer {
         (deployed_address, res)
     }
 
-    pub fn set_be(e: Env, user: Address, new_be: String) {
-        set_be(&e, &user, &new_be)
+    pub fn set_be(e: Env, user: Address, new_be: BytesN<65>) {
+        write_be(&e, &user, &new_be)
     }
 
-    pub fn get_be(e: Env) -> String {
-        get_be(&e)
+    pub fn get_be(e: Env) -> BytesN<65> {
+        read_be(&e)
     }
 
     pub fn set_admin(e: Env, user: Address, new_admin: Authority) {

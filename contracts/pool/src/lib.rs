@@ -6,6 +6,7 @@ mod contract;
 mod coupons;
 mod owner;
 mod pool;
+mod release;
 mod storage_types;
 mod token;
 mod utils;

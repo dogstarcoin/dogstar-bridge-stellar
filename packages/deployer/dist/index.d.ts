@@ -8,8 +8,18 @@ export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly standalone: {
         readonly networkPassphrase: "Standalone Network ; February 2017";
-        readonly contractId: "CAEZJPIV5CKQTA3EDRWRYJVNN3PGCHZ72O4BWXNKNSZ46RA2R5V6ZAVD";
+        readonly contractId: "CCW3O3OFZHJNUIBNLZCPMTTQDVGSCBQVGNHINKI4RMDY33GWKANALVEV";
     };
+};
+export type DataKey = {
+    tag: "Admin";
+    values: void;
+} | {
+    tag: "Be";
+    values: void;
+} | {
+    tag: "Pools";
+    values: readonly [string];
 };
 export interface Authority {
     fee_wallet: string;
@@ -22,7 +32,7 @@ export interface Client {
      */
     init: ({ admin, be }: {
         admin: Authority;
-        be: string;
+        be: Buffer;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE
@@ -40,9 +50,8 @@ export interface Client {
     /**
      * Construct and simulate a deploy transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    deploy: ({ deployer, wasm_hash, token, other_chain_address, fee, is_public, split_fees, owner, token_symbol }: {
+    deploy: ({ deployer, token, other_chain_address, fee, is_public, split_fees, owner, token_symbol }: {
         deployer: string;
-        wasm_hash: Buffer;
         token: string;
         other_chain_address: string;
         fee: u32;
@@ -63,13 +72,13 @@ export interface Client {
          * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
          */
         simulate?: boolean;
-    }) => Promise<AssembledTransaction<string>>;
+    }) => Promise<AssembledTransaction<readonly [string, any]>>;
     /**
      * Construct and simulate a set_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
     set_be: ({ user, new_be }: {
         user: string;
-        new_be: string;
+        new_be: Buffer;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE
@@ -100,7 +109,7 @@ export interface Client {
          * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
          */
         simulate?: boolean;
-    }) => Promise<AssembledTransaction<string>>;
+    }) => Promise<AssembledTransaction<Buffer>>;
     /**
      * Construct and simulate a set_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
@@ -138,16 +147,36 @@ export interface Client {
          */
         simulate?: boolean;
     }) => Promise<AssembledTransaction<Authority>>;
+    /**
+     * Construct and simulate a get_deployed_address transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+     */
+    get_deployed_address: ({ token }: {
+        token: string;
+    }, options?: {
+        /**
+         * The fee to pay for the transaction. Default: BASE_FEE
+         */
+        fee?: number;
+        /**
+         * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+         */
+        timeoutInSeconds?: number;
+        /**
+         * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+         */
+        simulate?: boolean;
+    }) => Promise<AssembledTransaction<string>>;
 }
 export declare class Client extends ContractClient {
     readonly options: ContractClientOptions;
     constructor(options: ContractClientOptions);
     readonly fromJSON: {
         init: (json: string) => AssembledTransaction<null>;
-        deploy: (json: string) => AssembledTransaction<string>;
+        deploy: (json: string) => AssembledTransaction<readonly [string, any]>;
         set_be: (json: string) => AssembledTransaction<null>;
-        get_be: (json: string) => AssembledTransaction<string>;
+        get_be: (json: string) => AssembledTransaction<Buffer>;
         set_admin: (json: string) => AssembledTransaction<null>;
         get_admin: (json: string) => AssembledTransaction<Authority>;
+        get_deployed_address: (json: string) => AssembledTransaction<string>;
     };
 }

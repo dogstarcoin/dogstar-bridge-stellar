@@ -1,19 +1,19 @@
 /// <reference types="node" resolution-mode="require"/>
 import { Buffer } from "buffer";
 import { AssembledTransaction, Client as ContractClient, ClientOptions as ContractClientOptions } from '@stellar/stellar-sdk/contract';
-import type { u32, u64, i128 } from '@stellar/stellar-sdk/contract';
+import type { u32, i128 } from '@stellar/stellar-sdk/contract';
 export * from '@stellar/stellar-sdk';
 export * as contract from '@stellar/stellar-sdk/contract';
 export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly standalone: {
         readonly networkPassphrase: "Standalone Network ; February 2017";
-        readonly contractId: "CBJ2LFVT3CDEJS2AL5ZAJJIPJNAQIVCAKRV3FY2IDI6EQ7IGBEFIUWRE";
+        readonly contractId: "CA7BVYR6VYGVK6AAYVYSNJ2ZN4CFMSEE4NTEWFCYBHDVHMEKHXLLGKVA";
     };
 };
 export interface CouponPayload {
     recovery_id: u32;
-    signature: string;
+    signature: Buffer;
 }
 export type DataKey = {
     tag: "Pool";
@@ -27,15 +27,28 @@ export type DataKey = {
 } | {
     tag: "Be";
     values: void;
+} | {
+    tag: "Release";
+    values: readonly [string];
 };
 export interface Pool {
     fee: u32;
     is_public: boolean;
-    last_release: u64;
     other_chain_address: string;
     split_fees: u32;
     token: string;
     token_symbol: string;
+}
+export interface Release {
+    last_claim: i128;
+    total_claimed: i128;
+}
+export interface ReleaseLiqEvent {
+    amount: i128;
+    external_from: string;
+    to: string;
+    token: string;
+    token_other_chain: string;
 }
 export interface Authority {
     fee_wallet: string;
@@ -43,6 +56,8 @@ export interface Authority {
 }
 export interface ReleaseLiqPayload {
     amount: i128;
+    external_other_chain: string;
+    timestamp: i128;
     to: string;
 }
 export interface LockLiqEvent {
@@ -70,9 +85,9 @@ export declare const Errors: {
 };
 export interface Client {
     /**
-     * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+     * Construct and simulate a init transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    initialize: ({ token, other_chain_address, fee, is_public, split_fees, owner, admin, be, token_symbol }: {
+    init: ({ token, other_chain_address, fee, is_public, split_fees, owner, admin, be, token_symbol }: {
         token: string;
         other_chain_address: string;
         fee: u32;
@@ -119,11 +134,30 @@ export interface Client {
     /**
      * Construct and simulate a lock_liq transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    lock_liq: ({ user, amount, from, to_other_chain }: {
+    lock_liq: ({ user, amount, to_other_chain }: {
         user: string;
         amount: i128;
-        from: string;
         to_other_chain: string;
+    }, options?: {
+        /**
+         * The fee to pay for the transaction. Default: BASE_FEE
+         */
+        fee?: number;
+        /**
+         * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+         */
+        timeoutInSeconds?: number;
+        /**
+         * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+         */
+        simulate?: boolean;
+    }) => Promise<AssembledTransaction<null>>;
+    /**
+     * Construct and simulate a approve transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+     */
+    approve: ({ from, amount }: {
+        from: string;
+        amount: i128;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE
@@ -158,8 +192,7 @@ export interface Client {
     /**
      * Construct and simulate a set_split transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    set_split: ({ user, split_fees }: {
-        user: string;
+    set_split: ({ split_fees }: {
         split_fees: u32;
     }, options?: {
         /**
@@ -178,8 +211,7 @@ export interface Client {
     /**
      * Construct and simulate a set_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    set_admin: ({ user, admin }: {
-        user: string;
+    set_admin: ({ admin }: {
         admin: Authority;
     }, options?: {
         /**
@@ -198,8 +230,7 @@ export interface Client {
     /**
      * Construct and simulate a set_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    set_be: ({ user, be }: {
-        user: string;
+    set_be: ({ be }: {
         be: Buffer;
     }, options?: {
         /**
@@ -235,8 +266,7 @@ export interface Client {
     /**
      * Construct and simulate a set_visibility transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    set_visibility: ({ user, is_public }: {
-        user: string;
+    set_visibility: ({ is_public }: {
         is_public: boolean;
     }, options?: {
         /**
@@ -255,8 +285,7 @@ export interface Client {
     /**
      * Construct and simulate a set_owner transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    set_owner: ({ user, owner }: {
-        user: string;
+    set_owner: ({ owner }: {
         owner: Authority;
     }, options?: {
         /**
@@ -275,8 +304,7 @@ export interface Client {
     /**
      * Construct and simulate a set_other_chain_address transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    set_other_chain_address: ({ user, other_chain_address }: {
-        user: string;
+    set_other_chain_address: ({ other_chain_address }: {
         other_chain_address: string;
     }, options?: {
         /**
@@ -295,8 +323,7 @@ export interface Client {
     /**
      * Construct and simulate a set_fee transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    set_fee: ({ user, fee }: {
-        user: string;
+    set_fee: ({ fee }: {
         fee: u32;
     }, options?: {
         /**
@@ -312,6 +339,23 @@ export interface Client {
          */
         simulate?: boolean;
     }) => Promise<AssembledTransaction<null>>;
+    /**
+     * Construct and simulate a get_owner transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+     */
+    get_owner: (options?: {
+        /**
+         * The fee to pay for the transaction. Default: BASE_FEE
+         */
+        fee?: number;
+        /**
+         * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+         */
+        timeoutInSeconds?: number;
+        /**
+         * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+         */
+        simulate?: boolean;
+    }) => Promise<AssembledTransaction<Authority>>;
     /**
      * Construct and simulate a get_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
@@ -334,9 +378,10 @@ export declare class Client extends ContractClient {
     readonly options: ContractClientOptions;
     constructor(options: ContractClientOptions);
     readonly fromJSON: {
-        initialize: (json: string) => AssembledTransaction<null>;
+        init: (json: string) => AssembledTransaction<null>;
         release_liq: (json: string) => AssembledTransaction<null>;
         lock_liq: (json: string) => AssembledTransaction<null>;
+        approve: (json: string) => AssembledTransaction<null>;
         get_pool: (json: string) => AssembledTransaction<Pool>;
         set_split: (json: string) => AssembledTransaction<null>;
         set_admin: (json: string) => AssembledTransaction<null>;
@@ -346,6 +391,7 @@ export declare class Client extends ContractClient {
         set_owner: (json: string) => AssembledTransaction<null>;
         set_other_chain_address: (json: string) => AssembledTransaction<null>;
         set_fee: (json: string) => AssembledTransaction<null>;
+        get_owner: (json: string) => AssembledTransaction<Authority>;
         get_be: (json: string) => AssembledTransaction<Buffer>;
     };
 }

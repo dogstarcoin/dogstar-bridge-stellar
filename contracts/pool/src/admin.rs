@@ -2,7 +2,6 @@ use soroban_sdk::Env;
 
 use crate::storage_types::{Authority, DataKey};
 
-// ADMIN
 pub fn has_admin(e: &Env) -> bool {
     let key = DataKey::Admin;
     e.storage().instance().has(&key)

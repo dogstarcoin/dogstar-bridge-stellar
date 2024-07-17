@@ -33,27 +33,41 @@ if (typeof window !== 'undefined') {
 export const networks = {
   standalone: {
     networkPassphrase: "Standalone Network ; February 2017",
-    contractId: "CBJ2LFVT3CDEJS2AL5ZAJJIPJNAQIVCAKRV3FY2IDI6EQ7IGBEFIUWRE",
+    contractId: "CA7BVYR6VYGVK6AAYVYSNJ2ZN4CFMSEE4NTEWFCYBHDVHMEKHXLLGKVA",
   }
 } as const
 
 
 export interface CouponPayload {
   recovery_id: u32;
-  signature: string;
+  signature: Buffer;
 }
 
-export type DataKey = {tag: "Pool", values: void} | {tag: "Owner", values: void} | {tag: "Admin", values: void} | {tag: "Be", values: void};
+export type DataKey = {tag: "Pool", values: void} | {tag: "Owner", values: void} | {tag: "Admin", values: void} | {tag: "Be", values: void} | {tag: "Release", values: readonly [string]};
 
 
 export interface Pool {
   fee: u32;
   is_public: boolean;
-  last_release: u64;
   other_chain_address: string;
   split_fees: u32;
   token: string;
   token_symbol: string;
+}
+
+
+export interface Release {
+  last_claim: i128;
+  total_claimed: i128;
+}
+
+
+export interface ReleaseLiqEvent {
+  amount: i128;
+  external_from: string;
+  to: string;
+  token: string;
+  token_other_chain: string;
 }
 
 
@@ -65,6 +79,8 @@ export interface Authority {
 
 export interface ReleaseLiqPayload {
   amount: i128;
+  external_other_chain: string;
+  timestamp: i128;
   to: string;
 }
 
@@ -86,9 +102,9 @@ export const Errors = {
 
 export interface Client {
   /**
-   * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Construct and simulate a init transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  initialize: ({token, other_chain_address, fee, is_public, split_fees, owner, admin, be, token_symbol}: {token: string, other_chain_address: string, fee: u32, is_public: boolean, split_fees: u32, owner: Authority, admin: Authority, be: Buffer, token_symbol: string}, options?: {
+  init: ({token, other_chain_address, fee, is_public, split_fees, owner, admin, be, token_symbol}: {token: string, other_chain_address: string, fee: u32, is_public: boolean, split_fees: u32, owner: Authority, admin: Authority, be: Buffer, token_symbol: string}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -128,7 +144,27 @@ export interface Client {
   /**
    * Construct and simulate a lock_liq transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  lock_liq: ({user, amount, from, to_other_chain}: {user: string, amount: i128, from: string, to_other_chain: string}, options?: {
+  lock_liq: ({user, amount, to_other_chain}: {user: string, amount: i128, to_other_chain: string}, options?: {
+    /**
+     * The fee to pay for the transaction. Default: BASE_FEE
+     */
+    fee?: number;
+
+    /**
+     * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+     */
+    timeoutInSeconds?: number;
+
+    /**
+     * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+     */
+    simulate?: boolean;
+  }) => Promise<AssembledTransaction<null>>
+
+  /**
+   * Construct and simulate a approve transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  approve: ({from, amount}: {from: string, amount: i128}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -168,7 +204,7 @@ export interface Client {
   /**
    * Construct and simulate a set_split transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_split: ({user, split_fees}: {user: string, split_fees: u32}, options?: {
+  set_split: ({split_fees}: {split_fees: u32}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -188,7 +224,7 @@ export interface Client {
   /**
    * Construct and simulate a set_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_admin: ({user, admin}: {user: string, admin: Authority}, options?: {
+  set_admin: ({admin}: {admin: Authority}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -208,7 +244,7 @@ export interface Client {
   /**
    * Construct and simulate a set_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_be: ({user, be}: {user: string, be: Buffer}, options?: {
+  set_be: ({be}: {be: Buffer}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -248,7 +284,7 @@ export interface Client {
   /**
    * Construct and simulate a set_visibility transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_visibility: ({user, is_public}: {user: string, is_public: boolean}, options?: {
+  set_visibility: ({is_public}: {is_public: boolean}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -268,7 +304,7 @@ export interface Client {
   /**
    * Construct and simulate a set_owner transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_owner: ({user, owner}: {user: string, owner: Authority}, options?: {
+  set_owner: ({owner}: {owner: Authority}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -288,7 +324,7 @@ export interface Client {
   /**
    * Construct and simulate a set_other_chain_address transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_other_chain_address: ({user, other_chain_address}: {user: string, other_chain_address: string}, options?: {
+  set_other_chain_address: ({other_chain_address}: {other_chain_address: string}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -308,7 +344,7 @@ export interface Client {
   /**
    * Construct and simulate a set_fee transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_fee: ({user, fee}: {user: string, fee: u32}, options?: {
+  set_fee: ({fee}: {fee: u32}, options?: {
     /**
      * The fee to pay for the transaction. Default: BASE_FEE
      */
@@ -324,6 +360,26 @@ export interface Client {
      */
     simulate?: boolean;
   }) => Promise<AssembledTransaction<null>>
+
+  /**
+   * Construct and simulate a get_owner transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  get_owner: (options?: {
+    /**
+     * The fee to pay for the transaction. Default: BASE_FEE
+     */
+    fee?: number;
+
+    /**
+     * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+     */
+    timeoutInSeconds?: number;
+
+    /**
+     * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+     */
+    simulate?: boolean;
+  }) => Promise<AssembledTransaction<Authority>>
 
   /**
    * Construct and simulate a get_be transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -349,33 +405,38 @@ export interface Client {
 export class Client extends ContractClient {
   constructor(public readonly options: ContractClientOptions) {
     super(
-      new ContractSpec([ "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAACQAAAAAAAAAFdG9rZW4AAAAAAAATAAAAAAAAABNvdGhlcl9jaGFpbl9hZGRyZXNzAAAAABAAAAAAAAAAA2ZlZQAAAAAEAAAAAAAAAAlpc19wdWJsaWMAAAAAAAABAAAAAAAAAApzcGxpdF9mZWVzAAAAAAAEAAAAAAAAAAVvd25lcgAAAAAAB9AAAAAJQXV0aG9yaXR5AAAAAAAAAAAAAAVhZG1pbgAAAAAAB9AAAAAJQXV0aG9yaXR5AAAAAAAAAAAAAAJiZQAAAAAD7gAAACAAAAAAAAAADHRva2VuX3N5bWJvbAAAABAAAAAA",
+      new ContractSpec([ "AAAAAAAAAAAAAAAEaW5pdAAAAAkAAAAAAAAABXRva2VuAAAAAAAAEwAAAAAAAAATb3RoZXJfY2hhaW5fYWRkcmVzcwAAAAAQAAAAAAAAAANmZWUAAAAABAAAAAAAAAAJaXNfcHVibGljAAAAAAAAAQAAAAAAAAAKc3BsaXRfZmVlcwAAAAAABAAAAAAAAAAFb3duZXIAAAAAAAfQAAAACUF1dGhvcml0eQAAAAAAAAAAAAAFYWRtaW4AAAAAAAfQAAAACUF1dGhvcml0eQAAAAAAAAAAAAACYmUAAAAAA+4AAABBAAAAAAAAAAx0b2tlbl9zeW1ib2wAAAAQAAAAAA==",
         "AAAAAAAAAAAAAAALcmVsZWFzZV9saXEAAAAAAgAAAAAAAAAOY291cG9uX3BheWxvYWQAAAAAB9AAAAANQ291cG9uUGF5bG9hZAAAAAAAAAAAAAAHcGF5bG9hZAAAAAfQAAAAEVJlbGVhc2VMaXFQYXlsb2FkAAAAAAAAAA==",
-        "AAAAAAAAAAAAAAAIbG9ja19saXEAAAAEAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAARmcm9tAAAAEwAAAAAAAAAOdG9fb3RoZXJfY2hhaW4AAAAAABMAAAAA",
+        "AAAAAAAAAAAAAAAIbG9ja19saXEAAAADAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAA50b19vdGhlcl9jaGFpbgAAAAAAEAAAAAA=",
+        "AAAAAAAAAAAAAAAHYXBwcm92ZQAAAAACAAAAAAAAAARmcm9tAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAA==",
         "AAAAAAAAAAAAAAAIZ2V0X3Bvb2wAAAAAAAAAAQAAB9AAAAAEUG9vbA==",
-        "AAAAAAAAAAAAAAAJc2V0X3NwbGl0AAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAACnNwbGl0X2ZlZXMAAAAAAAQAAAAA",
-        "AAAAAAAAAAAAAAAJc2V0X2FkbWluAAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAABWFkbWluAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAA",
-        "AAAAAAAAAAAAAAAGc2V0X2JlAAAAAAACAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAACYmUAAAAAA+4AAAAgAAAAAA==",
+        "AAAAAAAAAAAAAAAJc2V0X3NwbGl0AAAAAAAAAQAAAAAAAAAKc3BsaXRfZmVlcwAAAAAABAAAAAA=",
+        "AAAAAAAAAAAAAAAJc2V0X2FkbWluAAAAAAAAAQAAAAAAAAAFYWRtaW4AAAAAAAfQAAAACUF1dGhvcml0eQAAAAAAAAA=",
+        "AAAAAAAAAAAAAAAGc2V0X2JlAAAAAAABAAAAAAAAAAJiZQAAAAAD7gAAAEEAAAAA",
         "AAAAAAAAAAAAAAAJZ2V0X2FkbWluAAAAAAAAAAAAAAEAAAfQAAAACUF1dGhvcml0eQAAAA==",
-        "AAAAAAAAAAAAAAAOc2V0X3Zpc2liaWxpdHkAAAAAAAIAAAAAAAAABHVzZXIAAAATAAAAAAAAAAlpc19wdWJsaWMAAAAAAAABAAAAAA==",
-        "AAAAAAAAAAAAAAAJc2V0X293bmVyAAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAABW93bmVyAAAAAAAH0AAAAAlBdXRob3JpdHkAAAAAAAAA",
-        "AAAAAAAAAAAAAAAXc2V0X290aGVyX2NoYWluX2FkZHJlc3MAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAAE290aGVyX2NoYWluX2FkZHJlc3MAAAAAEAAAAAA=",
-        "AAAAAAAAAAAAAAAHc2V0X2ZlZQAAAAACAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAADZmVlAAAAAAQAAAAA",
-        "AAAAAAAAAAAAAAAGZ2V0X2JlAAAAAAAAAAAAAQAAA+4AAAAg",
-        "AAAAAQAAAAAAAAAAAAAADUNvdXBvblBheWxvYWQAAAAAAAACAAAAAAAAAAtyZWNvdmVyeV9pZAAAAAAEAAAAAAAAAAlzaWduYXR1cmUAAAAAAAAQ",
-        "AAAAAgAAAAAAAAAAAAAAB0RhdGFLZXkAAAAABAAAAAAAAAAAAAAABFBvb2wAAAAAAAAAAAAAAAVPd25lcgAAAAAAAAAAAAAAAAAABUFkbWluAAAAAAAAAAAAAAAAAAACQmUAAA==",
-        "AAAAAQAAAAAAAAAAAAAABFBvb2wAAAAHAAAAAAAAAANmZWUAAAAABAAAAAAAAAAJaXNfcHVibGljAAAAAAAAAQAAAAAAAAAMbGFzdF9yZWxlYXNlAAAABgAAAAAAAAATb3RoZXJfY2hhaW5fYWRkcmVzcwAAAAAQAAAAAAAAAApzcGxpdF9mZWVzAAAAAAAEAAAAAAAAAAV0b2tlbgAAAAAAABMAAAAAAAAADHRva2VuX3N5bWJvbAAAABA=",
+        "AAAAAAAAAAAAAAAOc2V0X3Zpc2liaWxpdHkAAAAAAAEAAAAAAAAACWlzX3B1YmxpYwAAAAAAAAEAAAAA",
+        "AAAAAAAAAAAAAAAJc2V0X293bmVyAAAAAAAAAQAAAAAAAAAFb3duZXIAAAAAAAfQAAAACUF1dGhvcml0eQAAAAAAAAA=",
+        "AAAAAAAAAAAAAAAXc2V0X290aGVyX2NoYWluX2FkZHJlc3MAAAAAAQAAAAAAAAATb3RoZXJfY2hhaW5fYWRkcmVzcwAAAAAQAAAAAA==",
+        "AAAAAAAAAAAAAAAHc2V0X2ZlZQAAAAABAAAAAAAAAANmZWUAAAAABAAAAAA=",
+        "AAAAAAAAAAAAAAAJZ2V0X293bmVyAAAAAAAAAAAAAAEAAAfQAAAACUF1dGhvcml0eQAAAA==",
+        "AAAAAAAAAAAAAAAGZ2V0X2JlAAAAAAAAAAAAAQAAA+4AAABB",
+        "AAAAAQAAAAAAAAAAAAAADUNvdXBvblBheWxvYWQAAAAAAAACAAAAAAAAAAtyZWNvdmVyeV9pZAAAAAAEAAAAAAAAAAlzaWduYXR1cmUAAAAAAAPuAAAAQA==",
+        "AAAAAgAAAAAAAAAAAAAAB0RhdGFLZXkAAAAABQAAAAAAAAAAAAAABFBvb2wAAAAAAAAAAAAAAAVPd25lcgAAAAAAAAAAAAAAAAAABUFkbWluAAAAAAAAAAAAAAAAAAACQmUAAAAAAAEAAAAAAAAAB1JlbGVhc2UAAAAAAQAAABM=",
+        "AAAAAQAAAAAAAAAAAAAABFBvb2wAAAAGAAAAAAAAAANmZWUAAAAABAAAAAAAAAAJaXNfcHVibGljAAAAAAAAAQAAAAAAAAATb3RoZXJfY2hhaW5fYWRkcmVzcwAAAAAQAAAAAAAAAApzcGxpdF9mZWVzAAAAAAAEAAAAAAAAAAV0b2tlbgAAAAAAABMAAAAAAAAADHRva2VuX3N5bWJvbAAAABA=",
+        "AAAAAQAAAAAAAAAAAAAAB1JlbGVhc2UAAAAAAgAAAAAAAAAKbGFzdF9jbGFpbQAAAAAACwAAAAAAAAANdG90YWxfY2xhaW1lZAAAAAAAAAs=",
+        "AAAAAQAAAAAAAAAAAAAAD1JlbGVhc2VMaXFFdmVudAAAAAAFAAAAAAAAAAZhbW91bnQAAAAAAAsAAAAAAAAADWV4dGVybmFsX2Zyb20AAAAAAAAQAAAAAAAAAAJ0bwAAAAAAEwAAAAAAAAAFdG9rZW4AAAAAAAATAAAAAAAAABF0b2tlbl9vdGhlcl9jaGFpbgAAAAAAABA=",
         "AAAAAQAAAAAAAAAAAAAACUF1dGhvcml0eQAAAAAAAAIAAAAAAAAACmZlZV93YWxsZXQAAAAAABMAAAAAAAAABnNpZ25lcgAAAAAAEw==",
-        "AAAAAQAAAAAAAAAAAAAAEVJlbGVhc2VMaXFQYXlsb2FkAAAAAAAAAgAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAAJ0bwAAAAAAEw==",
-        "AAAAAQAAAAAAAAAAAAAADExvY2tMaXFFdmVudAAAAAQAAAAAAAAABmFtb3VudAAAAAAACwAAAAAAAAAEZnJvbQAAABMAAAAAAAAADnRvX290aGVyX2NoYWluAAAAAAATAAAAAAAAABF0b2tlbl9vdGhlcl9jaGFpbgAAAAAAABA=",
+        "AAAAAQAAAAAAAAAAAAAAEVJlbGVhc2VMaXFQYXlsb2FkAAAAAAAABAAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAABRleHRlcm5hbF9vdGhlcl9jaGFpbgAAABAAAAAAAAAACXRpbWVzdGFtcAAAAAAAAAsAAAAAAAAAAnRvAAAAAAAT",
+        "AAAAAQAAAAAAAAAAAAAADExvY2tMaXFFdmVudAAAAAQAAAAAAAAABmFtb3VudAAAAAAACwAAAAAAAAAEZnJvbQAAABMAAAAAAAAADnRvX290aGVyX2NoYWluAAAAAAAQAAAAAAAAABF0b2tlbl9vdGhlcl9jaGFpbgAAAAAAABA=",
         "AAAABAAAAAAAAAAAAAAABUVycm9yAAAAAAAABQAAAAAAAAAMVW5hdXRob3JpemVkAAAAAQAAAAAAAAANSW52YWxpZENvdXBvbgAAAAAAAAIAAAAAAAAADVBvb2xJc1ByaXZhdGUAAAAAAAADAAAAAAAAAA1JbnZhbGlkUGFyYW1zAAAAAAAABAAAAAAAAAAPUG9vbEluaXRpYWxpemVkAAAAAAU=" ]),
       options
     )
   }
   public readonly fromJSON = {
-    initialize: this.txFromJSON<null>,
+    init: this.txFromJSON<null>,
         release_liq: this.txFromJSON<null>,
         lock_liq: this.txFromJSON<null>,
+        approve: this.txFromJSON<null>,
         get_pool: this.txFromJSON<Pool>,
         set_split: this.txFromJSON<null>,
         set_admin: this.txFromJSON<null>,
@@ -385,6 +446,7 @@ export class Client extends ContractClient {
         set_owner: this.txFromJSON<null>,
         set_other_chain_address: this.txFromJSON<null>,
         set_fee: this.txFromJSON<null>,
+        get_owner: this.txFromJSON<Authority>,
         get_be: this.txFromJSON<Buffer>
   }
 }

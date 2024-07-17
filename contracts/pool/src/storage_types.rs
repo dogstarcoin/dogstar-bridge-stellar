@@ -1,5 +1,10 @@
 use soroban_sdk::{contracterror, contracttype, Address, String};
 
+pub(crate) const DAY_IN_LEDGERS: u32 = 17280;
+
+pub(crate) const RELEASE_BUMP_AMOUNT: u32 = 30 * DAY_IN_LEDGERS;
+pub(crate) const RELEASE_LIFETIME_THRESHOLD: u32 = RELEASE_BUMP_AMOUNT - DAY_IN_LEDGERS;
+
 #[derive(Clone)]
 #[contracttype]
 pub enum DataKey {
@@ -7,6 +12,7 @@ pub enum DataKey {
     Owner,
     Admin,
     Be,
+    Release(Address),
 }
 
 #[derive(Clone)]
@@ -18,9 +24,24 @@ pub struct Pool {
     pub fee: u32,
     // 20 -> 20% admin  -  80% owner
     pub split_fees: u32,
-    pub last_release: u64,
     pub is_public: bool,
     pub token_symbol: String,
+}
+
+#[derive(Clone)]
+#[contracttype]
+pub struct Release {
+    pub last_claim: i128,
+    pub total_claimed: i128,
+}
+#[derive(Clone)]
+#[contracttype]
+pub struct ReleaseLiqEvent {
+    pub amount: i128,
+    pub external_from: String,
+    pub to: Address,
+    pub token_other_chain: String,
+    pub token: Address,
 }
 
 #[derive(Clone)]
@@ -35,6 +56,8 @@ pub struct Authority {
 pub struct ReleaseLiqPayload {
     pub amount: i128,
     pub to: Address,
+    pub timestamp: i128,
+    pub external_other_chain: String,
 }
 
 #[derive(Clone)]

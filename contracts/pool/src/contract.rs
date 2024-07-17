@@ -1,15 +1,14 @@
-use soroban_sdk::{
-    contract, contractimpl, panic_with_error, symbol_short, Address, BytesN, Env, String,
-};
+use soroban_sdk::{contract, contractimpl, symbol_short, Address, BytesN, Env, String};
 
 use crate::{
     admin::{get_admin, has_admin, set_admin},
-    be::{get_be, set_be},
+    be::{read_be, write_be},
     coupons::{Coupon, CouponPayload},
     owner::{get_owner, require_owner, set_owner},
     pool::{get_pool, set_pool},
-    storage_types::{Authority, Error, LockLiqEvent, Pool, ReleaseLiqPayload},
-    token::{transfer, transfer_in, transfer_out},
+    release::{read_release, write_release},
+    storage_types::{Authority, LockLiqEvent, Pool, Release, ReleaseLiqEvent, ReleaseLiqPayload},
+    token::{approve, transfer, transfer_in, transfer_out},
     utils::require_admin,
 };
 
@@ -39,7 +38,7 @@ impl BridgePool {
         split_fees: u32,
         owner: Authority,
         admin: Authority,
-        be: BytesN<32>,
+        be: BytesN<65>,
         token_symbol: String,
     ) {
         if has_admin(&e) {
@@ -55,22 +54,41 @@ impl BridgePool {
             fee,
             split_fees,
             is_public,
-            last_release: 0,
-            token_symbol: token_symbol,
+            token_symbol,
         };
 
         set_pool(&e, &pool);
         set_admin(&e, &admin);
         set_owner(&e, &owner);
-        set_be(&e, &be);
+        write_be(&e, &be);
     }
 
     pub fn release_liq(e: Env, coupon_payload: CouponPayload, payload: ReleaseLiqPayload) {
         let coupon = Coupon::new::<ReleaseLiqPayload>(&e, coupon_payload, &payload);
+        coupon.verify(&e);
 
-        coupon.verify(&e).unwrap();
+        let mut release = read_release(&e, payload.to.clone());
+        assert!(
+            payload.timestamp > release.last_claim,
+            "coupon has already been used"
+        );
 
         transfer_out(&e, &payload.to, &payload.amount);
+        let pool = get_pool(&e);
+
+        release.update(payload.timestamp, payload.amount);
+        write_release(&e, payload.to.clone(), &release);
+
+        e.events().publish(
+            (symbol_short!("release"), payload.to.clone()),
+            ReleaseLiqEvent {
+                amount: payload.amount,
+                external_from: payload.external_other_chain,
+                token_other_chain: pool.other_chain_address,
+                token: pool.token,
+                to: payload.to,
+            },
+        );
     }
 
     pub fn lock_liq(e: Env, user: Address, amount: i128, to_other_chain: String) {
@@ -82,7 +100,7 @@ impl BridgePool {
         let admin = get_admin(&e);
 
         if !pool.is_public && user.ne(&owner.signer) {
-            panic_with_error!(&e, Error::Unauthorized)
+            panic!("pool is private")
         }
 
         let as_fee = amount
@@ -114,9 +132,17 @@ impl BridgePool {
         );
     }
 
-    // POOL
+    pub fn approve(e: Env, from: Address, amount: i128) {
+        from.require_auth();
+        approve(&e, &from, &amount);
+    }
+
     pub fn get_pool(e: Env) -> Pool {
         get_pool(&e)
+    }
+
+    pub fn get_release(e: Env, user: Address) -> Release {
+        read_release(&e, user)
     }
 
     // ADMIN
@@ -135,10 +161,10 @@ impl BridgePool {
         set_admin(&e, &admin);
     }
 
-    pub fn set_be(e: Env, be: BytesN<32>) {
+    pub fn set_be(e: Env, be: BytesN<65>) {
         require_admin(&e);
 
-        set_be(&e, &be);
+        write_be(&e, &be);
     }
 
     pub fn get_admin(e: Env) -> Authority {
@@ -181,7 +207,7 @@ impl BridgePool {
         get_owner(&e)
     }
 
-    pub fn get_be(e: Env) -> BytesN<32> {
-        get_be(&e)
+    pub fn get_be(e: Env) -> BytesN<65> {
+        read_be(&e)
     }
 }
