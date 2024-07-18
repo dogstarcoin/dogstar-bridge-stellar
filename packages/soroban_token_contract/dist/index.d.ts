@@ -6,7 +6,7 @@ export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly standalone: {
         readonly networkPassphrase: "Standalone Network ; February 2017";
-        readonly contractId: "CDA6LRLY4SMOYATLNNWBZYHCLNIKTORXQDMPG2KZLJHNEG424ATWBA4Q";
+        readonly contractId: "CDT5NQH4YRGDKAAO7JU5WFU73MO4ANRP7GKQGPSUV7CU4GCZX2UTWW32";
     };
 };
 export interface AllowanceDataKey {

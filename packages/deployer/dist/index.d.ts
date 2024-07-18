@@ -8,7 +8,7 @@ export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly standalone: {
         readonly networkPassphrase: "Standalone Network ; February 2017";
-        readonly contractId: "CCWHHNL3QRQP7CK36WTRLHB3GERFG5KU37X4G4DKRH2QXVMSCVIEIZ5F";
+        readonly contractId: "CCO7FOMFFWU7HVX46MWZGASMYCL2RJH3WBENL5PXLVYRO7VEN44V2WUH";
     };
 };
 export type DataKey = {
@@ -20,6 +20,9 @@ export type DataKey = {
 } | {
     tag: "Pools";
     values: readonly [string];
+} | {
+    tag: "Tokens";
+    values: void;
 };
 export interface Authority {
     fee_wallet: string;
@@ -148,9 +151,26 @@ export interface Client {
         simulate?: boolean;
     }) => Promise<AssembledTransaction<Authority>>;
     /**
-     * Construct and simulate a get_deployed_address transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+     * Construct and simulate a get_tokens transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    get_deployed_address: ({ token }: {
+    get_tokens: (options?: {
+        /**
+         * The fee to pay for the transaction. Default: BASE_FEE
+         */
+        fee?: number;
+        /**
+         * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+         */
+        timeoutInSeconds?: number;
+        /**
+         * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+         */
+        simulate?: boolean;
+    }) => Promise<AssembledTransaction<Array<string>>>;
+    /**
+     * Construct and simulate a get_pool transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+     */
+    get_pool: ({ token }: {
         token: string;
     }, options?: {
         /**
@@ -166,6 +186,23 @@ export interface Client {
          */
         simulate?: boolean;
     }) => Promise<AssembledTransaction<string>>;
+    /**
+     * Construct and simulate a get_pools transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+     */
+    get_pools: (options?: {
+        /**
+         * The fee to pay for the transaction. Default: BASE_FEE
+         */
+        fee?: number;
+        /**
+         * The maximum amount of time to wait for the transaction to complete. Default: DEFAULT_TIMEOUT
+         */
+        timeoutInSeconds?: number;
+        /**
+         * Whether to automatically simulate the transaction when constructing the AssembledTransaction. Default: true
+         */
+        simulate?: boolean;
+    }) => Promise<AssembledTransaction<Array<string>>>;
 }
 export declare class Client extends ContractClient {
     readonly options: ContractClientOptions;
@@ -177,6 +214,8 @@ export declare class Client extends ContractClient {
         get_be: (json: string) => AssembledTransaction<Buffer>;
         set_admin: (json: string) => AssembledTransaction<null>;
         get_admin: (json: string) => AssembledTransaction<Authority>;
-        get_deployed_address: (json: string) => AssembledTransaction<string>;
+        get_tokens: (json: string) => AssembledTransaction<string[]>;
+        get_pool: (json: string) => AssembledTransaction<string>;
+        get_pools: (json: string) => AssembledTransaction<string[]>;
     };
 }

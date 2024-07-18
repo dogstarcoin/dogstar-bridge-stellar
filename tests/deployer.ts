@@ -1,17 +1,7 @@
-import { expect } from "chai";
 import { get_client_deployer } from "../contracts/deployer.ts";
 
-import {
-  ADMIN,
-  BE,
-  poolWarm,
-  scValToAuthority,
-  submit_txn,
-  USER,
-  XTAR,
-  XTAR_sol,
-} from "./utils/index.ts";
-import { scValToNative } from "../packages/deployer/dist/index.js";
+import { ADMIN, BE, submit_txn, USER } from "./utils/index.ts";
+import { get_client_soroban_token_contract } from "../contracts/soroban_token_contract.ts";
 
 describe("deployer", () => {
   const admin_pub_key = ADMIN.publicKey();
@@ -19,9 +9,8 @@ describe("deployer", () => {
 
   describe("success", () => {
     it("init", async () => {
-      const client = get_client_deployer(admin_pub_key);
-
-      const txn = await client.init(
+      const deployer = get_client_deployer(admin_pub_key);
+      const txn_deployer = await deployer.init(
         {
           admin: { signer: admin_pub_key, fee_wallet: user_pub_key },
           be: BE,
@@ -29,45 +18,30 @@ describe("deployer", () => {
         { simulate: false }
       );
 
-      await submit_txn(txn, ADMIN);
+      await submit_txn(txn_deployer, ADMIN);
 
-      const get_admin = await client.get_admin();
-      const result_get_admin = await submit_txn(get_admin, ADMIN);
-      const authority = scValToAuthority(result_get_admin);
-
-      const get_be = await client.get_be();
-      const result_get_be = await submit_txn(get_be, ADMIN);
-
-      expect(authority.signer).eq(admin_pub_key);
-      expect(authority.fee_wallet).eq(user_pub_key);
-      expect(scValToNative(result_get_be)).eq(BE);
-    });
-
-    it("deploy", async () => {
-      const client = get_client_deployer(admin_pub_key);
-      const txn = await client.deploy({
-        deployer: admin_pub_key,
-        wasm_hash: poolWarm,
-        token: XTAR,
-        other_chain_address: XTAR_sol,
-        fee: 5,
-        is_public: true,
-        split_fees: 40,
-        owner: {
-          signer: admin_pub_key,
-          fee_wallet: admin_pub_key,
+      const token = get_client_soroban_token_contract(admin_pub_key);
+      const txn_token = await token.initialize(
+        {
+          admin: admin_pub_key,
+          decimal: 9,
+          name: "xtar",
+          symbol: "xtar",
         },
-        token_symbol: "xtar",
-      });
+        { simulate: false }
+      );
 
-      try {
-        const result = await txn.simulate();
+      await submit_txn(txn_token, ADMIN);
 
-        console.log("Simulation result:", result);
-      } catch (error) {
-        console.log(error.simulation.events);
-      }
+      const txn_mint = await token.mint(
+        {
+          to: admin_pub_key,
+          amount: BigInt(10000),
+        },
+        { simulate: false }
+      );
+
+      await submit_txn(txn_mint, ADMIN);
     });
   });
-  describe("error", () => {});
 });

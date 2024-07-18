@@ -15,7 +15,7 @@ export const ADMIN_ADDRESS_VAL = nativeToScVal(
 );
 export const OWNER = Keypair.fromSecret(process.env.OWNER_PRIV_KEY);
 export const USER = Keypair.fromSecret(process.env.USER_PRIV_KEY);
-export const BE = process.env.BE_PUB_KEY;
+export const BE = Buffer.from(process.env.BE_PUB_KEY, "hex");
 export const BE_VAL = nativeToScVal(BE);
 
 export function scValToAuthority(scVal: xdr.ScVal): Authority {

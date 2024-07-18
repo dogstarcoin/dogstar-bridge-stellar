@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
 export const networks = {
     standalone: {
         networkPassphrase: "Standalone Network ; February 2017",
-        contractId: "CCWHHNL3QRQP7CK36WTRLHB3GERFG5KU37X4G4DKRH2QXVMSCVIEIZ5F",
+        contractId: "CCO7FOMFFWU7HVX46MWZGASMYCL2RJH3WBENL5PXLVYRO7VEN44V2WUH",
     }
 };
 export const Errors = {};
@@ -23,8 +23,10 @@ export class Client extends ContractClient {
             "AAAAAAAAAAAAAAAGZ2V0X2JlAAAAAAAAAAAAAQAAA+4AAABB",
             "AAAAAAAAAAAAAAAJc2V0X2FkbWluAAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAACW5ld19hZG1pbgAAAAAAB9AAAAAJQXV0aG9yaXR5AAAAAAAAAA==",
             "AAAAAAAAAAAAAAAJZ2V0X2FkbWluAAAAAAAAAAAAAAEAAAfQAAAACUF1dGhvcml0eQAAAA==",
-            "AAAAAAAAAAAAAAAUZ2V0X2RlcGxveWVkX2FkZHJlc3MAAAABAAAAAAAAAAV0b2tlbgAAAAAAABMAAAABAAAAEw==",
-            "AAAAAgAAAAAAAAAAAAAAB0RhdGFLZXkAAAAAAwAAAAAAAAAAAAAABUFkbWluAAAAAAAAAAAAAAAAAAACQmUAAAAAAAEAAAAAAAAABVBvb2xzAAAAAAAAAQAAABM=",
+            "AAAAAAAAAAAAAAAKZ2V0X3Rva2VucwAAAAAAAAAAAAEAAAPqAAAAEw==",
+            "AAAAAAAAAAAAAAAIZ2V0X3Bvb2wAAAABAAAAAAAAAAV0b2tlbgAAAAAAABMAAAABAAAAEw==",
+            "AAAAAAAAAAAAAAAJZ2V0X3Bvb2xzAAAAAAAAAAAAAAEAAAPqAAAAEw==",
+            "AAAAAgAAAAAAAAAAAAAAB0RhdGFLZXkAAAAABAAAAAAAAAAAAAAABUFkbWluAAAAAAAAAAAAAAAAAAACQmUAAAAAAAEAAAAAAAAABVBvb2xzAAAAAAAAAQAAABMAAAAAAAAAAAAAAAZUb2tlbnMAAA==",
             "AAAAAQAAAAAAAAAAAAAACUF1dGhvcml0eQAAAAAAAAIAAAAAAAAACmZlZV93YWxsZXQAAAAAABMAAAAAAAAABnNpZ25lcgAAAAAAEw=="]), options);
         this.options = options;
     }
@@ -35,6 +37,8 @@ export class Client extends ContractClient {
         get_be: (this.txFromJSON),
         set_admin: (this.txFromJSON),
         get_admin: (this.txFromJSON),
-        get_deployed_address: (this.txFromJSON)
+        get_tokens: (this.txFromJSON),
+        get_pool: (this.txFromJSON),
+        get_pools: (this.txFromJSON)
     };
 }

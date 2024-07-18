@@ -1,15 +1,13 @@
 use crate::{
     admin::{get_admin, require_admin, set_admin},
     be::{read_be, write_be},
-    types::{Authority, DataKey},
+    storage_types::{read_all_pool, read_pool, read_tokens, write_pool, Authority, DataKey},
 };
 
 use soroban_sdk::{
-    contract, contractimpl, log, symbol_short,
-    testutils::storage::Instance,
-    vec,
+    contract, contractimpl, symbol_short, vec,
     xdr::{FromXdr, ToXdr},
-    Address, BytesN, Env, FromVal, IntoVal, String, Symbol, TryFromVal, TryIntoVal, Val, Vec,
+    Address, BytesN, Env, IntoVal, String, Val, Vec,
 };
 
 mod contract {
@@ -70,8 +68,7 @@ impl BridgeDeployer {
         let res: Val = e.invoke_contract(&deployed_address, &symbol_short!("init"), args);
 
         // Map token with his pool address
-        let key = DataKey::Pools(token);
-        e.storage().instance().set(&key, &deployed_address);
+        write_pool(&e, token, &deployed_address);
 
         // Return the contract ID of the deployed contract and the result of
         // invoking the init result.
@@ -94,28 +91,15 @@ impl BridgeDeployer {
         get_admin(&e)
     }
 
-    pub fn get_deployed_address(e: Env, token: Address) -> Address {
-        let key = DataKey::Pools(token);
+    pub fn get_tokens(e: Env) -> Vec<Address> {
+        read_tokens(&e)
+    }
 
-        e.storage().instance().get(&key).unwrap()
+    pub fn get_pool(e: Env, token: Address) -> Address {
+        read_pool(&e, token)
     }
 
     pub fn get_pools(e: Env) -> Vec<Address> {
-        let all_data = e.storage().instance().all();
-        let mut pools = Vec::<Address>::new(&e);
-
-        for (key, val) in all_data.iter() {
-            let inner_vec: Vec<Val> = key.try_into_val(&e).unwrap();
-            if let Some(data_key) = inner_vec.first() {
-                let symbol: Symbol = data_key.try_into_val(&e).map_err(|_| ()).unwrap();
-                if Symbol::new(&e, "Pools").eq(&symbol) {
-                    pools.push_back(Address::try_from_val(&e, &val).unwrap());
-                }
-            } else {
-                panic!("no first item")
-            }
-        }
-
-        pools
+        read_all_pool(&e)
     }
 }

@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
 export const networks = {
     standalone: {
         networkPassphrase: "Standalone Network ; February 2017",
-        contractId: "CDA6LRLY4SMOYATLNNWBZYHCLNIKTORXQDMPG2KZLJHNEG424ATWBA4Q",
+        contractId: "CDT5NQH4YRGDKAAO7JU5WFU73MO4ANRP7GKQGPSUV7CU4GCZX2UTWW32",
     }
 };
 export const Errors = {};

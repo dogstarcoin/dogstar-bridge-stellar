@@ -1,8 +1,8 @@
 #![cfg(test)]
 
-use super::{contract::BridgeDeployerClient, types::Authority, BridgeDeployer};
-use soroban_sdk::{log, vec, BytesN, String};
+use super::{contract::BridgeDeployerClient, storage_types::Authority, BridgeDeployer};
 use soroban_sdk::{testutils::Address as _, Address, Env};
+use soroban_sdk::{vec, BytesN, String};
 
 fn init(e: &Env) -> (BridgeDeployerClient, Authority, BytesN<65>) {
     let contract_id = e.register_contract(None, BridgeDeployer {});
@@ -71,9 +71,11 @@ fn test_deploy() {
         &token_symbol,
     );
 
-    let stored_deployed_address = client.get_deployed_address(&token);
+    let stored_deployed_address = client.get_pool(&token);
+    let tokens = client.get_tokens();
 
     assert_eq!(stored_deployed_address, deployed_address);
+    assert_eq!(tokens, vec![&env, token])
 }
 
 #[test]

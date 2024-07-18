@@ -1,6 +1,6 @@
 use soroban_sdk::{Address, Env};
 
-use crate::types::{Authority, DataKey};
+use crate::storage_types::{Authority, DataKey};
 
 pub fn get_admin(e: &Env) -> Authority {
     e.storage()

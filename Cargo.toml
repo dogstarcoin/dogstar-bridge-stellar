@@ -1,7 +1,11 @@
 [workspace]
-resolver = "2"
+resolver = "2" 
+
+# Dont change order, deployer depends on pool 
 members = [
-  "contracts/*",
+  "contracts/pool",
+  "contracts/deployer",
+  "contracts/token",
 ]
 
 [workspace.dependencies]
