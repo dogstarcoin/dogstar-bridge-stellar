@@ -1,8 +1,8 @@
 #![cfg(test)]
 
 use super::{contract::BridgeDeployerClient, types::Authority, BridgeDeployer};
+use soroban_sdk::{log, vec, BytesN, String};
 use soroban_sdk::{testutils::Address as _, Address, Env};
-use soroban_sdk::{BytesN, String};
 
 fn init(e: &Env) -> (BridgeDeployerClient, Authority, BytesN<65>) {
     let contract_id = e.register_contract(None, BridgeDeployer {});
@@ -92,4 +92,50 @@ fn test_set_admin() {
     let stored_admin = client.get_admin();
     assert_eq!(stored_admin.signer, new_admin.signer);
     assert_eq!(stored_admin.fee_wallet, new_admin.fee_wallet);
+}
+
+#[test]
+fn test_get_pools() {
+    let env: Env = Env::default();
+    env.mock_all_auths();
+    let (client, admin, _) = init(&env);
+
+    let deployer = admin.signer.clone();
+    let token = Address::generate(&env);
+    let other_chain_address = String::from_str(&env, "0x1234");
+    let fee = 10u32;
+    let is_public = true;
+    let split_fees = 50u32;
+    let owner = Authority {
+        signer: Address::generate(&env),
+        fee_wallet: Address::generate(&env),
+    };
+    let token_symbol = String::from_str(&env, "TKN");
+
+    let (pool_1_address, _) = client.deploy(
+        &deployer,
+        &token,
+        &other_chain_address,
+        &fee,
+        &is_public,
+        &split_fees,
+        &owner,
+        &token_symbol,
+    );
+    let token2 = Address::generate(&env);
+
+    let (pool_2_address, _) = client.deploy(
+        &deployer,
+        &token2,
+        &other_chain_address,
+        &fee,
+        &is_public,
+        &split_fees,
+        &owner,
+        &token_symbol,
+    );
+
+    let pools = client.get_pools();
+
+    assert_eq!(pools, vec![&env, pool_1_address, pool_2_address])
 }

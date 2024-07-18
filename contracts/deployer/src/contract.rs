@@ -5,9 +5,11 @@ use crate::{
 };
 
 use soroban_sdk::{
-    contract, contractimpl, symbol_short, vec,
+    contract, contractimpl, log, symbol_short,
+    testutils::storage::Instance,
+    vec,
     xdr::{FromXdr, ToXdr},
-    Address, BytesN, Env, IntoVal, String, Val, Vec,
+    Address, BytesN, Env, FromVal, IntoVal, String, Symbol, TryFromVal, TryIntoVal, Val, Vec,
 };
 
 mod contract {
@@ -96,5 +98,24 @@ impl BridgeDeployer {
         let key = DataKey::Pools(token);
 
         e.storage().instance().get(&key).unwrap()
+    }
+
+    pub fn get_pools(e: Env) -> Vec<Address> {
+        let all_data = e.storage().instance().all();
+        let mut pools = Vec::<Address>::new(&e);
+
+        for (key, val) in all_data.iter() {
+            let inner_vec: Vec<Val> = key.try_into_val(&e).unwrap();
+            if let Some(data_key) = inner_vec.first() {
+                let symbol: Symbol = data_key.try_into_val(&e).map_err(|_| ()).unwrap();
+                if Symbol::new(&e, "Pools").eq(&symbol) {
+                    pools.push_back(Address::try_from_val(&e, &val).unwrap());
+                }
+            } else {
+                panic!("no first item")
+            }
+        }
+
+        pools
     }
 }
