@@ -4,7 +4,7 @@ use crate::{
     admin::{get_admin, has_admin, set_admin},
     be::{read_be, write_be},
     coupons::{Coupon, CouponPayload},
-    owner::{get_owner, require_owner, set_owner},
+    owner::{require_owner, set_owner},
     pool::{get_pool, set_pool},
     release::{read_release, write_release},
     storage_types::{Authority, LockLiqEvent, Pool, Release, ReleaseLiqEvent, ReleaseLiqPayload},
@@ -55,11 +55,11 @@ impl BridgePool {
             split_fees,
             is_public,
             token_symbol,
+            owner,
         };
 
         set_pool(&e, &pool);
         set_admin(&e, &admin);
-        set_owner(&e, &owner);
         write_be(&e, &be);
     }
 
@@ -96,7 +96,7 @@ impl BridgePool {
         check_nonnegative_amount(amount);
 
         let pool = get_pool(&e);
-        let owner = get_owner(&e);
+        let owner = pool.owner;
         let admin = get_admin(&e);
 
         if !pool.is_public && user.ne(&owner.signer) {
@@ -183,7 +183,7 @@ impl BridgePool {
     pub fn set_owner(e: Env, owner: Authority) {
         require_owner(&e);
 
-        set_owner(&e, &owner);
+        set_owner(&e, owner);
     }
 
     pub fn set_other_chain_address(e: Env, other_chain_address: String) {
@@ -204,7 +204,7 @@ impl BridgePool {
     }
 
     pub fn get_owner(e: Env) -> Authority {
-        get_owner(&e)
+        get_pool(&e).owner
     }
 
     pub fn get_be(e: Env) -> BytesN<65> {

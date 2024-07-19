@@ -1,7 +1,9 @@
 use crate::{
     admin::{get_admin, require_admin, set_admin},
     be::{read_be, write_be},
-    storage_types::{read_all_pool, read_pool, read_tokens, write_pool, Authority, DataKey},
+    storage_types::{
+        read_all_pool, read_pool, read_tokens, write_pool, Authority, DataKey, PoolInfo,
+    },
 };
 
 use soroban_sdk::{
@@ -68,7 +70,7 @@ impl BridgeDeployer {
         let res: Val = e.invoke_contract(&deployed_address, &symbol_short!("init"), args);
 
         // Map token with his pool address
-        write_pool(&e, token, &deployed_address);
+        write_pool(&e, token, deployed_address.clone(), token_symbol);
 
         // Return the contract ID of the deployed contract and the result of
         // invoking the init result.
@@ -95,11 +97,11 @@ impl BridgeDeployer {
         read_tokens(&e)
     }
 
-    pub fn get_pool(e: Env, token: Address) -> Address {
+    pub fn get_pool(e: Env, token: Address) -> PoolInfo {
         read_pool(&e, token)
     }
 
-    pub fn get_pools(e: Env) -> Vec<Address> {
+    pub fn get_pools(e: Env) -> Vec<PoolInfo> {
         read_all_pool(&e)
     }
 }

@@ -9,10 +9,10 @@ pub(crate) const RELEASE_LIFETIME_THRESHOLD: u32 = RELEASE_BUMP_AMOUNT - DAY_IN_
 #[contracttype]
 pub enum DataKey {
     Pool,
-    Owner,
     Admin,
     Be,
     Release(Address),
+    Lock(Address),
 }
 
 #[derive(Clone)]
@@ -26,6 +26,7 @@ pub struct Pool {
     pub split_fees: u32,
     pub is_public: bool,
     pub token_symbol: String,
+    pub owner: Authority,
 }
 
 #[derive(Clone)]
@@ -34,6 +35,14 @@ pub struct Release {
     pub last_claim: i128,
     pub total_claimed: i128,
 }
+
+#[derive(Clone)]
+#[contracttype]
+pub struct Lock {
+    pub last_lock: i128,
+    pub total_locked: i128,
+}
+
 #[derive(Clone)]
 #[contracttype]
 pub struct ReleaseLiqEvent {

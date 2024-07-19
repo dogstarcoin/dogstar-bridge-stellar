@@ -1,5 +1,7 @@
 #![cfg(test)]
 
+use crate::storage_types::PoolInfo;
+
 use super::{contract::BridgeDeployerClient, storage_types::Authority, BridgeDeployer};
 use soroban_sdk::{testutils::Address as _, Address, Env};
 use soroban_sdk::{vec, BytesN, String};
@@ -71,10 +73,17 @@ fn test_deploy() {
         &token_symbol,
     );
 
-    let stored_deployed_address = client.get_pool(&token);
+    let pool_info = client.get_pool(&token);
     let tokens = client.get_tokens();
 
-    assert_eq!(stored_deployed_address, deployed_address);
+    assert_eq!(
+        pool_info,
+        PoolInfo {
+            pool: deployed_address,
+            token_address: token.clone(),
+            token_symbol: token_symbol.clone(),
+        }
+    );
     assert_eq!(tokens, vec![&env, token])
 }
 
@@ -139,5 +148,17 @@ fn test_get_pools() {
 
     let pools = client.get_pools();
 
-    assert_eq!(pools, vec![&env, pool_1_address, pool_2_address])
+    let pool_info_1 = PoolInfo {
+        pool: pool_1_address,
+        token_address: token,
+        token_symbol: token_symbol.clone(),
+    };
+
+    let pool_info_2 = PoolInfo {
+        pool: pool_2_address,
+        token_address: token2,
+        token_symbol,
+    };
+
+    assert_eq!(pools, vec![&env, pool_info_1, pool_info_2])
 }
