@@ -24,6 +24,24 @@ fn check_fee(fee: u32) {
     }
 }
 
+fn calculate_amounts(amount: i128, pool: &Pool) -> (i128, i128, i128) {
+    let as_fee = amount
+        .checked_mul(pool.fee.into())
+        .unwrap()
+        .checked_div(100)
+        .unwrap();
+    let amount_to_admin = as_fee
+        .checked_mul(pool.split_fees.into())
+        .unwrap()
+        .checked_div(100)
+        .unwrap();
+    let amount_to_owner = as_fee.checked_sub(amount_to_admin).unwrap();
+
+    let to_receive = amount.checked_sub(as_fee).unwrap();
+
+    (to_receive, amount_to_owner, amount_to_admin)
+}
+
 #[contract]
 pub struct BridgePool;
 
@@ -96,30 +114,17 @@ impl BridgePool {
         check_nonnegative_amount(amount);
 
         let pool = get_pool(&e);
-        let owner = pool.owner;
+        let owner = &pool.owner;
         let admin = get_admin(&e);
 
         if !pool.is_public && user.ne(&owner.signer) {
             panic!("pool is private")
         }
 
-        let as_fee = amount
-            .checked_mul(pool.fee.into())
-            .unwrap()
-            .checked_div(100)
-            .unwrap();
-        let amount_to_admin = as_fee
-            .checked_mul(pool.split_fees.into())
-            .unwrap()
-            .checked_div(100)
-            .unwrap();
-        let amount_to_owner = as_fee.checked_sub(amount_to_admin).unwrap();
-
-        let to_receive = amount.checked_sub(as_fee).unwrap();
-
+        let (to_receive, to_owner, to_admin) = calculate_amounts(amount, &pool);
         transfer_in(&e, &user, &to_receive);
-        transfer(&e, &user, &admin.fee_wallet, &amount_to_admin);
-        transfer(&e, &user, &owner.fee_wallet, &amount_to_owner);
+        transfer(&e, &user, &admin.fee_wallet, &to_admin);
+        transfer(&e, &user, &owner.fee_wallet, &to_owner);
 
         e.events().publish(
             (symbol_short!("locked"),),
